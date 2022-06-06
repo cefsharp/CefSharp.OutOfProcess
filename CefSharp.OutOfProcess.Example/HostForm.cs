@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Windows.Forms;
 
 namespace CefSharp.OutOfProcess.Example
@@ -23,17 +22,10 @@ namespace CefSharp.OutOfProcess.Example
 
         private void HostFormOnLoad(object sender, EventArgs e)
         {
-            var host = new ChromiumHostControl();
-            host.CreateControl();
-            var hostHwnd = host.Handle;
+            var browser = new ChromiumWebBrowser();
+            browser.Dock = DockStyle.Fill;
 
-            splitContainer.Panel2.Controls.Add(host);
-
-            var currentProcess = Process.GetCurrentProcess();
-
-            var args = $"--parentProcessId={currentProcess.Id} --hostHwnd={hostHwnd.ToInt32()}";
-
-            var browserProcess = Process.Start("CefSharp.OutOfProcess.BrowserProcess.exe", args);
+            splitContainer.Panel2.Controls.Add(browser);
         }
 
         private void ExitToolStripMenuItemClick(object sender, EventArgs e)

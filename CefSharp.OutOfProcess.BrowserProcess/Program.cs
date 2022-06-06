@@ -31,6 +31,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var browser = new ChromiumWebBrowser("https://github.com");
 
             var windowInfo = new WindowInfo();
+            windowInfo.WindowName = "CefSharpBrowserProcess";
             windowInfo.SetAsChild(new IntPtr(hostHwnd));
 
             browser.CreateBrowser(windowInfo);
