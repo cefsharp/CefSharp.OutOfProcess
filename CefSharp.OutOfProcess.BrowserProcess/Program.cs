@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using CefSharp.Internals;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
@@ -11,7 +12,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             Cef.EnableHighDPISupport();
 
-            //Debugger.Launch();
+            Debugger.Launch();
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
             var hostHwnd = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--hostHwnd"));
@@ -21,22 +22,29 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var settings = new CefSettings()
             {
                 //By default CefSharp will use an in-memory cache, you need to specify a Cache Folder to persist data
-                CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache")
+                CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache"),
+                MultiThreadedMessageLoop = false
             };
+
+            var browserProcessHandler = new BrowserProcessHandler(parentProcessId, new IntPtr(hostHwnd));
 
             Cef.EnableWaitForBrowsersToClose();
 
-            Cef.Initialize(settings);
+            Cef.Initialize(settings, performDependencyCheck:true, browserProcessHandler: browserProcessHandler);
 
-            var browser = new ChromiumWebBrowser("https://github.com");
+            Task.Run(() =>
+            {
+                parentProcess.WaitForExit();
 
-            var windowInfo = new WindowInfo();
-            windowInfo.WindowName = "CefSharpBrowserProcess";
-            windowInfo.SetAsChild(new IntPtr(hostHwnd));
+                CefThread.ExecuteOnUiThread(() =>
+                {
+                    Cef.QuitMessageLoop();
 
-            browser.CreateBrowser(windowInfo);
+                    return true;
+                });
+            });
 
-            parentProcess.WaitForExit();
+            Cef.RunMessageLoop();            
 
             Cef.WaitForBrowsersToClose();
 
