@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <PackageReference Include="CefSharp.Common.NETCore" Version="102.0.90-RCI4501" />
+    <PackageReference Include="PInvoke.Kernel32" Version="0.7.104" />
+    <PackageReference Include="StreamJsonRpc" Version="2.11.35" />
   </ItemGroup>
 
 </Project>

@@ -34,6 +34,7 @@ namespace CefSharp.OutOfProcess.Example
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+            this.closeBrowserToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -53,6 +54,7 @@ namespace CefSharp.OutOfProcess.Example
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.closeBrowserToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -89,6 +91,13 @@ namespace CefSharp.OutOfProcess.Example
             this.richTextBox1.Text = "Welcome to the CefSharp OutOfProcess Example!\nThis demos using a WinForms parent " +
     "application to run CefSharp out of process.\n\n";
             // 
+            // closeBrowserToolStripMenuItem
+            // 
+            this.closeBrowserToolStripMenuItem.Name = "closeBrowserToolStripMenuItem";
+            this.closeBrowserToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.closeBrowserToolStripMenuItem.Text = "Close Browser";
+            this.closeBrowserToolStripMenuItem.Click += new System.EventHandler(this.CloseBrowserToolStripMenuItemClick);
+            // 
             // HostForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -116,6 +125,7 @@ namespace CefSharp.OutOfProcess.Example
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.ToolStripMenuItem closeBrowserToolStripMenuItem;
     }
 }
 

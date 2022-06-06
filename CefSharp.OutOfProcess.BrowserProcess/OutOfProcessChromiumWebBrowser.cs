@@ -3,13 +3,15 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
+using StreamJsonRpc;
+using PInvoke;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
     /// <summary>
     /// An ChromiumWebBrowser instance specifically for hosting CEF out of process
     /// </summary>
-    public partial class ChromiumWebBrowser : IWebBrowserInternal
+    public partial class OutOfProcessChromiumWebBrowser : IWebBrowserInternal
     {
         public const string BrowserNotInitializedExceptionErrorMessage =
             "The ChromiumWebBrowser instance creates the underlying Chromium Embedded Framework (CEF) browser instance in an async fashion. " +
@@ -21,9 +23,13 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         private IBrowserAdapter managedCefBrowserAdapter;
 
+        /// <summary>
+        /// JSON RPC used for IPC with host
+        /// </summary>
+        private JsonRpc _jsonRpc;
 
         /// <summary>
-        /// Flag to guard the creation of the underlying offscreen browser - only one instance can be created
+        /// Flag to guard the creation of the underlying browser - only one instance can be created
         /// </summary>
         private bool browserCreated;
 
@@ -335,6 +341,23 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             Interlocked.Exchange(ref browserInitialized, 1);
 
             OnAfterBrowserCreated(browser);
+
+            _jsonRpc = JsonRpc.Attach(Console.OpenStandardOutput(), Console.OpenStandardInput());
+            _jsonRpc.AllowModificationWhileListening = true;
+
+            _jsonRpc.AddLocalRpcMethod("CLOSE", (Action) delegate ()
+            {
+                _ = CefThread.ExecuteOnUiThread(() =>
+                {
+                    Cef.QuitMessageLoop();
+
+                    return true;
+                });
+            });
+
+            var threadId = Kernel32.GetCurrentThreadId();
+
+            _ = _jsonRpc.NotifyAsync("OnAfterBrowserCreated", browser.GetHost().GetWindowHandle().ToInt32(), threadId);
         }
 
         /// <summary>
@@ -611,7 +634,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         public event EventHandler<TitleChangedEventArgs> TitleChanged;
 
         /// <summary>
-        /// Create a new OffScreen Chromium Browser. If you use <see cref="CefSharp.JavascriptBinding.JavascriptBindingSettings.LegacyBindingEnabled"/> = true then you must
+        /// Create a new ChromiumWebBrowser. If you use <see cref="CefSharp.JavascriptBinding.JavascriptBindingSettings.LegacyBindingEnabled"/> = true then you must
         /// set <paramref name="automaticallyCreateBrowser"/> to false and call <see cref="CreateBrowser"/> after the objects are registered.
         /// The underlying Chromium Embedded Framework(CEF) Browser is created asynchronouly, to subscribe to the <see cref="BrowserInitialized"/> event it is recommended
         /// that you set <paramref name="automaticallyCreateBrowser"/> to false, subscribe to the event and then call <see cref="CreateBrowser(IWindowInfo, IBrowserSettings)"/>
@@ -627,7 +650,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// you have a chance to subscribe to the event as the CEF Browser is created async. (Issue https://github.com/cefsharp/CefSharp/issues/3552).
         /// </param>
         /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
-        public ChromiumWebBrowser(string address = "",
+        public OutOfProcessChromiumWebBrowser(string address = "",
             IRequestContext requestContext = null,
             Action<IBrowser> onAfterBrowserCreated = null)
         {
@@ -641,15 +664,15 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         }
 
         /// <summary>
-        /// Finalizes an instance of the <see cref="ChromiumWebBrowser"/> class.
+        /// Finalizes an instance of the <see cref="OutOfProcessChromiumWebBrowser"/> class.
         /// </summary>
-        ~ChromiumWebBrowser()
+        ~OutOfProcessChromiumWebBrowser()
         {
             Dispose(false);
         }
 
         /// <summary>
-        /// Releases all resources used by the <see cref="ChromiumWebBrowser"/> object
+        /// Releases all resources used by the <see cref="OutOfProcessChromiumWebBrowser"/> object
         /// </summary>
         public void Dispose()
         {
@@ -658,7 +681,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         }
 
         /// <summary>
-        /// Releases unmanaged and - optionally - managed resources for the <see cref="ChromiumWebBrowser"/>
+        /// Releases unmanaged and - optionally - managed resources for the <see cref="OutOfProcessChromiumWebBrowser"/>
         /// </summary>
         /// <param name="disposing"><see langword="true" /> to release both managed and unmanaged resources; <see langword="false" /> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
@@ -672,6 +695,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             if (disposing)
             {
+                _jsonRpc?.Dispose();
+                _jsonRpc = null;
+
                 CanExecuteJavascriptInMainFrame = false;
                 Interlocked.Exchange(ref browserInitialized, 0);
 
@@ -698,11 +724,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 browser = null;
                 BrowserCore = null;
 
-                if (managedCefBrowserAdapter != null)
-                {
-                    managedCefBrowserAdapter.Dispose();
-                    managedCefBrowserAdapter = null;
-                }
+                managedCefBrowserAdapter?.Dispose();
+                managedCefBrowserAdapter = null;
 
                 // LifeSpanHandler is set to null after managedCefBrowserAdapter.Dispose so ILifeSpanHandler.DoClose
                 // is called.
@@ -717,12 +740,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         /// <param name="windowInfo">Window information used when creating the browser</param>
         /// <param name="browserSettings">Browser initialization settings</param>
-        /// <exception cref="System.Exception">An instance of the underlying offscreen browser has already been created, this method can only be called once.</exception>
+        /// <exception cref="System.Exception">An instance of the underlying browser has already been created, this method can only be called once.</exception>
         public void CreateBrowser(IWindowInfo windowInfo = null, IBrowserSettings browserSettings = null)
         {
             if (browserCreated)
             {
-                throw new Exception("An instance of the underlying offscreen browser has already been created, this method can only be called once.");
+                throw new Exception("An instance of the underlying browser has already been created, this method can only be called once.");
             }
 
             browserCreated = true;
@@ -768,7 +791,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         /// <param name="windowInfo">Window information used when creating the browser</param>
         /// <param name="browserSettings">Browser initialization settings</param>
-        /// <exception cref="System.Exception">An instance of the underlying offscreen browser has already been created, this method can only be called once.</exception>
+        /// <exception cref="System.Exception">An instance of the underlying browser has already been created, this method can only be called once.</exception>
         /// <returns>
         /// A <see cref="Task{IBrowser}"/> that represents the creation of the underlying CEF browser (<see cref="IBrowser"/> instance.
         /// When the task completes then the CEF Browser will have been created and you can start performing basic tasks.
@@ -833,7 +856,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <returns>returns false</returns>
         bool IChromiumWebBrowserBase.Focus()
         {
-            // no control to focus for offscreen browser
             return false;
         }
 

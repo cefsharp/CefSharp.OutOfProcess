@@ -8,11 +8,13 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 {
     public class Program
     {
+        private static bool _disposed;
+
         public static int Main(string[] args)
         {
             Cef.EnableHighDPISupport();
 
-            Debugger.Launch();
+            //Debugger.Launch();
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
             var hostHwnd = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--hostHwnd"));
@@ -36,6 +38,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 parentProcess.WaitForExit();
 
+                if(_disposed)
+                {
+                    return;
+                }
+
                 CefThread.ExecuteOnUiThread(() =>
                 {
                     Cef.QuitMessageLoop();
@@ -44,7 +51,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 });
             });
 
-            Cef.RunMessageLoop();            
+            Cef.RunMessageLoop();
+
+            _disposed = true;
 
             Cef.WaitForBrowsersToClose();
 

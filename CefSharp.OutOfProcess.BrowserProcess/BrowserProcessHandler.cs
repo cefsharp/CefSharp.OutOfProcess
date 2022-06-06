@@ -17,7 +17,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             base.OnContextInitialized();
 
-            var browser = new ChromiumWebBrowser("https://github.com");
+            var browser = new OutOfProcessChromiumWebBrowser("https://github.com");
 
             var windowInfo = new WindowInfo();
             windowInfo.WindowName = "CefSharpBrowserProcess";

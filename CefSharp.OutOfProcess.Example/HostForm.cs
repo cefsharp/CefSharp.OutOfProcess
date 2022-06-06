@@ -32,5 +32,14 @@ namespace CefSharp.OutOfProcess.Example
         {
             Close();
         }
+
+        private void CloseBrowserToolStripMenuItemClick(object sender, EventArgs e)
+        {
+            var ctrl = splitContainer.Panel2.Controls[0];
+
+            splitContainer.Panel2.Controls.Remove(ctrl);
+
+            ctrl.Dispose();
+        }
     }
 }

@@ -3,20 +3,24 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using PInvoke;
+using StreamJsonRpc;
 
 namespace CefSharp.OutOfProcess.Example
 {
     public class ChromiumWebBrowser : Control
     {
         private IntPtr _browserHwnd = IntPtr.Zero;
-        private Process _browserProces;
+        private int _remoteThreadId = -1;
+        private Process _browserProcess;
+        private bool _disposed;
+        private JsonRpc _jsonRpc;
 
         /// <summary>
         /// The <see cref="Process"/> in which the CEF Browser is actually running.
         /// </summary>
         public Process BrowserProcess
         {
-            get { return _browserProces; }
+            get { return _browserProcess; }
         }
 
         /// <summary>
@@ -38,7 +42,44 @@ namespace CefSharp.OutOfProcess.Example
 
             var args = $"--parentProcessId={currentProcess.Id} --hostHwnd={Handle.ToInt32()}";
 
-            _browserProces = Process.Start("CefSharp.OutOfProcess.BrowserProcess.exe", args);
+            _browserProcess = Process.Start(new ProcessStartInfo("CefSharp.OutOfProcess.BrowserProcess.exe", args)
+            {
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true,
+            });
+
+            Action<int, int> OnAfterBrowserCreatedDelegate = delegate (int ptr, int threadId)
+            {
+                _browserHwnd = new IntPtr(ptr);
+                _remoteThreadId = threadId;
+            };
+
+            _jsonRpc = JsonRpc.Attach(_browserProcess.StandardInput.BaseStream, _browserProcess.StandardOutput.BaseStream);
+            _jsonRpc.AllowModificationWhileListening = true;
+
+            _jsonRpc.AddLocalRpcMethod("OnAfterBrowserCreated", OnAfterBrowserCreatedDelegate);
+
+            _jsonRpc.AllowModificationWhileListening = false;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+
+            if(disposing)
+            {
+                _remoteThreadId = -1;
+
+#pragma warning disable VSTHRD110 // Observe result of async calls
+                _ = _jsonRpc?.NotifyAsync("CLOSE");
+#pragma warning restore VSTHRD110 // Observe result of async calls
+                _jsonRpc?.Dispose();
+                _jsonRpc = null;
+                _browserHwnd = IntPtr.Zero;
+                _disposed = true;
+
+                _browserProcess.WaitForExit();
+            }
         }
 
         /// <inheritdoc />
@@ -72,15 +113,6 @@ namespace CefSharp.OutOfProcess.Example
         /// <param name="height">height</param>
         protected virtual void ResizeBrowser(int width, int height)
         {
-            if (_browserHwnd == IntPtr.Zero)
-            {
-                var result = ChromiumRenderWidgetHandleFinder.TryFindHandle(Handle, "CefBrowserWindow", out var handle);
-                if (result)
-                {
-                    _browserHwnd = handle;
-                }
-            }
-
             if (_browserHwnd != IntPtr.Zero)
             {
                 if (width == 0 && height == 0)
