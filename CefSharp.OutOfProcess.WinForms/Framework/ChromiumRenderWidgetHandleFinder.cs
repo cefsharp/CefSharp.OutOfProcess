@@ -2,7 +2,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace CefSharp.OutOfProcess.Example
+namespace CefSharp.OutOfProcess.WinForms.Framework
 {
     /// <summary>
     /// ChromiumWidgetHandleFinder

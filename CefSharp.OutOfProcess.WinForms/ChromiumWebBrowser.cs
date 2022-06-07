@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using CefSharp.OutOfProcess;
 using PInvoke;
 
-namespace CefSharp.OutOfProcess.Example
+namespace CefSharp.OutOfProcess.WinForms
 {
-    public class ChromiumWebBrowser : Control
+    public class ChromiumWebBrowser : Control, IChromiumWebBrowser
     {
         private IntPtr _browserHwnd = IntPtr.Zero;
         private int _remoteThreadId = -1;
@@ -13,8 +14,13 @@ namespace CefSharp.OutOfProcess.Example
         private bool _disposed;
         private OutOfProcessHost _host;
         private readonly string _initialAddress;
+        private int _id;
 
-        internal int Id { get; set; }
+        int IChromiumWebBrowser.Id
+        {
+            get { return _id; }
+            set { _id = value; }
+        }
 
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
@@ -22,7 +28,7 @@ namespace CefSharp.OutOfProcess.Example
             _initialAddress = initialAddress;
         }
 
-        internal void SetBrowserHwnd(IntPtr hwnd)
+        void IChromiumWebBrowser.SetBrowserHwnd(IntPtr hwnd)
         {
             _browserHwnd = hwnd;
         }
@@ -62,7 +68,7 @@ namespace CefSharp.OutOfProcess.Example
                 _browserHwnd = IntPtr.Zero;
                 _disposed = true;
 
-                _host?.CloseBrowser(Id);
+                _host?.CloseBrowser(_id);
                 _host = null;
             }
         }

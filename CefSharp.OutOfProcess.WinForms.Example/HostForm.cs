@@ -1,7 +1,8 @@
-﻿using System;
+﻿using CefSharp.OutOfProcess;
+using System;
 using System.Windows.Forms;
 
-namespace CefSharp.OutOfProcess.Example
+namespace CefSharp.OutOfProcess.WinForms.Example
 {
     public partial class HostForm : Form
     {

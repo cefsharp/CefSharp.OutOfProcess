@@ -1,21 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
-    <PlatformTarget>x64</PlatformTarget>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <SelfContained>false</SelfContained>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.104" />
     <PackageReference Include="PInvoke.User32" Version="0.7.104" />
+    <PackageReference Include="StreamJsonRpc" Version="2.11.35" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CefSharp.OutOfProcess.BrowserProcess\CefSharp.OutOfProcess.BrowserProcess.csproj" />
+    <ProjectReference Include="..\CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ChromiumWebBrowser.cs">
+      <SubType>Component</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

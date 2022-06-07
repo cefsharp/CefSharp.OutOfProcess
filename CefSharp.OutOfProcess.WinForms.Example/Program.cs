@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace CefSharp.OutOfProcess.Example
+namespace CefSharp.OutOfProcess.WinForms.Example
 {
     static class Program
     {

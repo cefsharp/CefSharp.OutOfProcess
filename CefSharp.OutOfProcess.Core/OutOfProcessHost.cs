@@ -3,9 +3,10 @@ using StreamJsonRpc;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
-namespace CefSharp.OutOfProcess.Example
+namespace CefSharp.OutOfProcess
 {
     public class OutOfProcessHost : IDisposable
     {
@@ -14,15 +15,16 @@ namespace CefSharp.OutOfProcess.Example
         private int _uiThreadId;
         private int _remoteuiThreadId;
         private int _browserIdentifier = 1;
-        private ConcurrentDictionary<int, ChromiumWebBrowser> _browsers = new ConcurrentDictionary<int, ChromiumWebBrowser>();
+        private string _outofProcessFilePath;
+        private ConcurrentDictionary<int, IChromiumWebBrowser> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowser>();
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private OutOfProcessHost()
+        private OutOfProcessHost(string path)
         {
-
+            _outofProcessFilePath = path;
         }
 
-        public bool CreateBrowser(ChromiumWebBrowser browser, IntPtr handle, string url)
+        public bool CreateBrowser(IChromiumWebBrowser browser, IntPtr handle, string url)
         {
             var id = _browserIdentifier++;
             _ = _jsonRpc.NotifyAsync("CreateBrowser", handle.ToInt32(), url, id);
@@ -43,7 +45,7 @@ namespace CefSharp.OutOfProcess.Example
 
             var args = $"--parentProcessId={currentProcess.Id}";
 
-            _browserProcess = Process.Start(new ProcessStartInfo("CefSharp.OutOfProcess.BrowserProcess.exe", args)
+            _browserProcess = Process.Start(new ProcessStartInfo(_outofProcessFilePath, args)
             {
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
@@ -76,7 +78,7 @@ namespace CefSharp.OutOfProcess.Example
             _jsonRpc.AllowModificationWhileListening = false;
         }
 
-        internal void CloseBrowser(int id)
+        public void CloseBrowser(int id)
         {
             _ = _jsonRpc?.NotifyAsync("CloseBrowser", id);
         }
@@ -88,9 +90,9 @@ namespace CefSharp.OutOfProcess.Example
             _jsonRpc = null;
         }
 
-        public static Task<OutOfProcessHost> CreateAsync()
+        public static Task<OutOfProcessHost> CreateAsync(string path = "CefSharp.OutOfProcess.BrowserProcess.exe")
         {
-            var host = new OutOfProcessHost();
+            var host = new OutOfProcessHost(Path.GetFullPath(path));
 
             host.Init();            
 
