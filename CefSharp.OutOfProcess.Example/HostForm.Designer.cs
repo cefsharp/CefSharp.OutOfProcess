@@ -14,6 +14,12 @@ namespace CefSharp.OutOfProcess.Example
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
+            if(disposing)
+            {
+                _outOfProcessHost?.Dispose();
+                _outOfProcessHost = null;
+            }
+
             if (disposing && (components != null))
             {
                 components.Dispose();

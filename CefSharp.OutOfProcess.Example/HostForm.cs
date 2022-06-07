@@ -5,6 +5,8 @@ namespace CefSharp.OutOfProcess.Example
 {
     public partial class HostForm : Form
     {
+        private OutOfProcessHost _outOfProcessHost;
+
         public HostForm()
         {
             InitializeComponent();
@@ -20,9 +22,11 @@ namespace CefSharp.OutOfProcess.Example
             hostControl.Size = splitContainer.Panel2.ClientSize;
         }
 
-        private void HostFormOnLoad(object sender, EventArgs e)
+        private async void HostFormOnLoad(object sender, EventArgs e)
         {
-            var browser = new ChromiumWebBrowser();
+            _outOfProcessHost = await OutOfProcessHost.CreateAsync();
+
+            var browser = new ChromiumWebBrowser(_outOfProcessHost, "https://github.com");
             browser.Dock = DockStyle.Fill;
 
             splitContainer.Panel2.Controls.Add(browser);

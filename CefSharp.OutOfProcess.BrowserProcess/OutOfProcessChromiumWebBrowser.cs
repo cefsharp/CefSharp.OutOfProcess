@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
 using StreamJsonRpc;
-using PInvoke;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -17,6 +16,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             "The ChromiumWebBrowser instance creates the underlying Chromium Embedded Framework (CEF) browser instance in an async fashion. " +
             "The undelying CefBrowser instance is not yet initialized. Use the IsBrowserInitializedChanged event and check " +
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
+
+        /// <summary>
+        /// Internal ID used for tracking browsers between Processes;
+        /// </summary>
+        private int _id;
 
         /// <summary>
         /// The managed cef browser adapter
@@ -32,12 +36,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// Flag to guard the creation of the underlying browser - only one instance can be created
         /// </summary>
         private bool browserCreated;
-
-        /// <summary>
-        /// Action which is called immediately before the <see cref="BrowserInitialized"/> event after the
-        /// uderlying Chromium Embedded Framework (CEF) browser has been created.
-        /// </summary>
-        private Action<IBrowser> onAfterBrowserCreatedDelegate;
 
         /// <summary>
         /// Used as workaround for issue https://github.com/cefsharp/CefSharp/issues/3021
@@ -69,6 +67,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// Initial browser load action
         /// </summary>
         private Action<bool?, CefErrorCode?> initialLoadAction;
+
+        /// <summary>
+        /// Id
+        /// </summary>
+        public int Id => _id;
 
         /// <summary>
         /// Get access to the core <see cref="IBrowser"/> instance.
@@ -258,7 +261,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.SetJavascriptMessageReceived(JavascriptMessageReceivedEventArgs args)
         {
             //Run the event on the ThreadPool (rather than the CEF Thread we are currently on).
-            Task.Run(() => JavascriptMessageReceived?.Invoke(this, args));
+            _ = Task.Run(() => JavascriptMessageReceived?.Invoke(this, args));
         }
 
         /// <summary>
@@ -340,24 +343,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             initialLoadAction = InitialLoad;
             Interlocked.Exchange(ref browserInitialized, 1);
 
-            OnAfterBrowserCreated(browser);
-
-            _jsonRpc = JsonRpc.Attach(Console.OpenStandardOutput(), Console.OpenStandardInput());
-            _jsonRpc.AllowModificationWhileListening = true;
-
-            _jsonRpc.AddLocalRpcMethod("CLOSE", (Action) delegate ()
-            {
-                _ = CefThread.ExecuteOnUiThread(() =>
-                {
-                    Cef.QuitMessageLoop();
-
-                    return true;
-                });
-            });
-
-            var threadId = Kernel32.GetCurrentThreadId();
-
-            _ = _jsonRpc.NotifyAsync("OnAfterBrowserCreated", browser.GetHost().GetWindowHandle().ToInt32(), threadId);
+            _ = _jsonRpc.NotifyAsync("OnAfterBrowserCreated", _id, browser.GetHost().GetWindowHandle().ToInt32());
         }
 
         /// <summary>
@@ -480,8 +466,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(errorCode.Value, -1));
             }
         }
-
-        partial void OnAfterBrowserCreated(IBrowser browser);
 
         partial void SetLoadingStateChange(LoadingStateChangedEventArgs args);
 
@@ -609,14 +593,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <value>The accessibility handler.</value>
         public IAccessibilityHandler AccessibilityHandler { get; set; }
         /// <summary>
-        /// Event called after the underlying CEF browser instance has been created. 
-        /// It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
-        /// thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
-        /// To access UI elements you'll need to Invoke/Dispatch onto the UI Thread.
-        /// (The exception to this is when you're running with settings.MultiThreadedMessageLoop = false, then they'll be the same thread).
-        /// </summary>
-        public event EventHandler BrowserInitialized;
-        /// <summary>
         /// Occurs when the browser address changed.
         /// It's important to note this event is fired on a CEF UI thread, which by default is not the same as your application UI
         /// thread. It is unwise to block on this thread for any length of time as your browser will become unresponsive and/or hang..
@@ -640,6 +616,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// that you set <paramref name="automaticallyCreateBrowser"/> to false, subscribe to the event and then call <see cref="CreateBrowser(IWindowInfo, IBrowserSettings)"/>
         /// to ensure you are subscribe to the event before it's fired (Issue https://github.com/cefsharp/CefSharp/issues/3552).
         /// </summary>
+        /// <param name="id">id</param>
         /// <param name="address">Initial address (url) to load</param>
         /// <param name="browserSettings">The browser settings to use. If null, the default settings are used.</param>
         /// <param name="requestContext">See <see cref="RequestContext" /> for more details. Defaults to null</param>
@@ -650,15 +627,15 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// you have a chance to subscribe to the event as the CEF Browser is created async. (Issue https://github.com/cefsharp/CefSharp/issues/3552).
         /// </param>
         /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
-        public OutOfProcessChromiumWebBrowser(string address = "",
-            IRequestContext requestContext = null,
-            Action<IBrowser> onAfterBrowserCreated = null)
+        public OutOfProcessChromiumWebBrowser(JsonRpc jsonRpc, int id, string address = "",
+            IRequestContext requestContext = null)
         {
+            _id = id;
             RequestContext = requestContext;
+            _jsonRpc = jsonRpc;
 
             Cef.AddDisposable(this);
             Address = address;
-            onAfterBrowserCreatedDelegate = onAfterBrowserCreated;
 
             managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, false);
         }
@@ -695,15 +672,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             if (disposing)
             {
-                _jsonRpc?.Dispose();
-                _jsonRpc = null;
-
                 CanExecuteJavascriptInMainFrame = false;
                 Interlocked.Exchange(ref browserInitialized, 0);
 
                 // Don't reference event listeners any longer:
                 AddressChanged = null;
-                BrowserInitialized = null;
                 ConsoleMessage = null;
                 FrameLoadEnd = null;
                 FrameLoadStart = null;
@@ -784,40 +757,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         }
 
-        /// <summary>
-        /// Create the underlying CEF browser. The address and request context passed into the constructor
-        /// will be used. If a <see cref="Action{IBrowser}"/> delegate was passed
-        /// into the constructor it will not be called as this method overrides that value internally.
-        /// </summary>
-        /// <param name="windowInfo">Window information used when creating the browser</param>
-        /// <param name="browserSettings">Browser initialization settings</param>
-        /// <exception cref="System.Exception">An instance of the underlying browser has already been created, this method can only be called once.</exception>
-        /// <returns>
-        /// A <see cref="Task{IBrowser}"/> that represents the creation of the underlying CEF browser (<see cref="IBrowser"/> instance.
-        /// When the task completes then the CEF Browser will have been created and you can start performing basic tasks.
-        /// Note that the control's <see cref="BrowserInitialized"/> event will be invoked after this task completes.
-        /// </returns>
-        public Task<IBrowser> CreateBrowserAsync(IWindowInfo windowInfo = null, IBrowserSettings browserSettings = null)
-        {
-            var tcs = new TaskCompletionSource<IBrowser>();
-
-            onAfterBrowserCreatedDelegate += new Action<IBrowser>(b =>
-            {
-                tcs.TrySetResultAsync(b);
-            });
-
-            try
-            {
-                CreateBrowser(windowInfo, browserSettings);
-            }
-            catch (Exception ex)
-            {
-                tcs.TrySetExceptionAsync(ex);
-            }
-
-            return tcs.Task;
-        }
-
         /// <inheritdoc/>
         public void Load(string url)
         {
@@ -851,12 +790,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         }
 
         /// <summary>
-        /// Has Focus - Always False
+        /// TODO: Improve focus
+        /// Has Focus 
         /// </summary>
         /// <returns>returns false</returns>
         bool IChromiumWebBrowserBase.Focus()
         {
-            return false;
+            ThrowExceptionIfDisposed();
+            ThrowExceptionIfBrowserNotInitialized();
+
+            BrowserCore.GetHost().SetFocus(true);
+
+            return true;
         }
 
         /// <summary>
@@ -869,16 +814,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfBrowserNotInitialized();
 
             return browser;
-        }
-
-        /// <summary>
-        /// Called when [after browser created].
-        /// </summary>
-        /// <param name="browser">The browser.</param>
-        partial void OnAfterBrowserCreated(IBrowser browser)
-        {
-            onAfterBrowserCreatedDelegate?.Invoke(browser);
-            BrowserInitialized?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>

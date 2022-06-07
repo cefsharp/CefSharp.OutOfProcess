@@ -14,10 +14,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             Cef.EnableHighDPISupport();
 
-            //Debugger.Launch();
+            Debugger.Launch();
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
-            var hostHwnd = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--hostHwnd"));
 
             var parentProcess = Process.GetProcessById(parentProcessId);
 
@@ -28,7 +27,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 MultiThreadedMessageLoop = false
             };
 
-            var browserProcessHandler = new BrowserProcessHandler(parentProcessId, new IntPtr(hostHwnd));
+            var browserProcessHandler = new BrowserProcessHandler(parentProcessId);
 
             Cef.EnableWaitForBrowsersToClose();
 
