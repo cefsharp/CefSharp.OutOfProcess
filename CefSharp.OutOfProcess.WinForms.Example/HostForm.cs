@@ -1,11 +1,22 @@
-﻿using CefSharp.OutOfProcess;
-using System;
+﻿using System;
+using System.IO;
 using System.Windows.Forms;
 
 namespace CefSharp.OutOfProcess.WinForms.Example
 {
     public partial class HostForm : Form
     {
+#if DEBUG
+        private string _buildType = "Debug";
+#else
+        private string _buildType = "Release";
+#endif
+
+#if NETCOREAPP3_1_OR_GREATER
+        private string _targetFramework = "netcoreapp3.1";
+#else
+        private string _targetFramework = "net462";
+#endif
         private OutOfProcessHost _outOfProcessHost;
 
         public HostForm()
@@ -25,7 +36,9 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 
         private async void HostFormOnLoad(object sender, EventArgs e)
         {
-            _outOfProcessHost = await OutOfProcessHost.CreateAsync();
+            var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
+            outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
+            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath);
 
             var browser = new ChromiumWebBrowser(_outOfProcessHost, "https://github.com");
             browser.Dock = DockStyle.Fill;

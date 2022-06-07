@@ -10,6 +10,11 @@ namespace CefSharp.OutOfProcess
 {
     public class OutOfProcessHost : IDisposable
     {
+        /// <summary>
+        /// The CefSharp.OutOfProcess.BrowserProcess.exe name
+        /// </summary>
+        public const string HostExeName = "CefSharp.OutOfProcess.BrowserProcess.exe";
+
         private Process _browserProcess;
         private JsonRpc _jsonRpc;
         private int _uiThreadId;
@@ -90,9 +95,21 @@ namespace CefSharp.OutOfProcess
             _jsonRpc = null;
         }
 
-        public static Task<OutOfProcessHost> CreateAsync(string path = "CefSharp.OutOfProcess.BrowserProcess.exe")
+        public static Task<OutOfProcessHost> CreateAsync(string path = HostExeName)
         {
-            var host = new OutOfProcessHost(Path.GetFullPath(path));
+            if(string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            var fullPath = Path.GetFullPath(path);
+
+            if (!File.Exists(fullPath))
+            {
+                throw new FileNotFoundException("Unable to find Host executable.", path);
+            }
+
+            var host = new OutOfProcessHost(fullPath);
 
             host.Init();            
 

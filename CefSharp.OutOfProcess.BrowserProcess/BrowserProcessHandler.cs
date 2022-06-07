@@ -55,7 +55,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             _jsonRpc.AddLocalRpcMethod("CreateBrowser", (Action<int, string, int>)delegate (int parentHwnd, string url, int id)
             {
-                Debugger.Break();
+                //Debugger.Break();
 
                 _ = CefThread.ExecuteOnUiThread(() =>
                 {
