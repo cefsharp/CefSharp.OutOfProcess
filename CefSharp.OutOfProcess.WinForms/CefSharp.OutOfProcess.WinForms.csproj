@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj" />
+    <ProjectReference Include="..\CefSharp.Puppeteer\lib\PuppeteerSharp\CefSharp.DevTools.OutOfProcess.csproj" />
   </ItemGroup>
 
   <ItemGroup>

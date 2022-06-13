@@ -22,6 +22,7 @@ namespace CefSharp.OutOfProcess
         private int _browserIdentifier = 1;
         private string _outofProcessFilePath;
         private ConcurrentDictionary<int, IChromiumWebBrowser> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowser>();
+
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private OutOfProcessHost(string path)
@@ -29,14 +30,17 @@ namespace CefSharp.OutOfProcess
             _outofProcessFilePath = path;
         }
 
-        public bool CreateBrowser(IChromiumWebBrowser browser, IntPtr handle, string url)
+        public bool CreateBrowser(IChromiumWebBrowser browser, IntPtr handle, string url, out int id)
         {
-            var id = _browserIdentifier++;
+            id = _browserIdentifier++;
             _ = _jsonRpc.NotifyAsync("CreateBrowser", handle.ToInt32(), url, id);
 
-            browser.Id = id;
-
             return _browsers.TryAdd(id, browser);
+        }
+
+        internal Task SendDevToolsMessage(int browserId, string message)
+        {
+            return _jsonRpc.NotifyAsync("SendDevToolsMessage", browserId, message);            
         }
 
         private Task<OutOfProcessHost> InitializedTask
@@ -78,6 +82,30 @@ namespace CefSharp.OutOfProcess
                 _processInitialized.TrySetResult(this);
 
                 //var attached = User32.AttachThreadInput(_remoteThreadId, _uiThreadId, true);
+            });
+
+            _jsonRpc.AddLocalRpcMethod("OnDevToolsMessage", (Action<int, string>)delegate (int browserId, string jsonMsg)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    chromiumWebBrowser.OnDevToolsMessage(jsonMsg);
+                }
+            });
+
+            _jsonRpc.AddLocalRpcMethod("OnDevToolsAgentDetached", (Action<int>)delegate (int browserId)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    
+                }
+            });
+
+            _jsonRpc.AddLocalRpcMethod("OnDevToolsReady", (Action<int>)delegate (int browserId)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    chromiumWebBrowser.OnDevToolsReady();
+                }
             });
 
             _jsonRpc.AllowModificationWhileListening = false;

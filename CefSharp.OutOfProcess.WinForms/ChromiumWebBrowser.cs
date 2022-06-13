@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using CefSharp.OutOfProcess;
+using CefSharp.Puppeteer;
 using PInvoke;
 
 namespace CefSharp.OutOfProcess.WinForms
@@ -15,11 +16,11 @@ namespace CefSharp.OutOfProcess.WinForms
         private OutOfProcessHost _host;
         private readonly string _initialAddress;
         private int _id;
+        private IDevToolsContext _devToolsContext;
 
         int IChromiumWebBrowser.Id
         {
             get { return _id; }
-            set { _id = value; }
         }
 
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
@@ -48,7 +49,10 @@ namespace CefSharp.OutOfProcess.WinForms
         {
             base.OnHandleCreated(e);
 
-            _host.CreateBrowser(this, Handle, url: _initialAddress);
+            _host.CreateBrowser(this, Handle, url: _initialAddress, out _id);
+
+            var connection = Connection.Attach(new OutOfProcessConnectionTransport(_id, _host));
+            _devToolsContext = DevToolsContext.CreateForOutOfProcess(connection);
         }
 
         protected override void Dispose(bool disposing)
@@ -140,6 +144,28 @@ namespace CefSharp.OutOfProcess.WinForms
             {
                 User32.SetWindowPos(_browserHwnd, IntPtr.Zero, 0, 0, width, height, User32.SetWindowPosFlags.SWP_NOZORDER);
             }
+        }
+
+        public void OnDevToolsMessage(string jsonMsg)
+        {
+            if(_devToolsContext != null)
+            {
+                //TODO: This is messy, cleanup the ownership to improve this
+                _devToolsContext = (DevToolsContext)_devToolsContext;
+                var transport = _devToolsContext.Client.Transport as OutOfProcessConnectionTransport;
+
+                transport.InvokeMessageReceived(jsonMsg);
+            }
+        }
+
+        public void OnDevToolsReady()
+        {
+            var ctx = (DevToolsContext)_devToolsContext;
+
+            _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
+            {
+                //NOW the user can start using the devtools context
+            });            
         }
     }
 }

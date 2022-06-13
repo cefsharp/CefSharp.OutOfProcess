@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
 using StreamJsonRpc;
+using System.Collections.Generic;
+using CefSharp.Callback;
+using System.IO;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -16,6 +19,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             "The ChromiumWebBrowser instance creates the underlying Chromium Embedded Framework (CEF) browser instance in an async fashion. " +
             "The undelying CefBrowser instance is not yet initialized. Use the IsBrowserInitializedChanged event and check " +
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
+
+        private IDevToolsMessageObserver _devtoolsMessageObserver;
+        private IRegistration _devtoolsRegistration;
 
         /// <summary>
         /// Internal ID used for tracking browsers between Processes;
@@ -343,7 +349,44 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             initialLoadAction = InitialLoad;
             Interlocked.Exchange(ref browserInitialized, 1);
 
+            var host = browser.GetHost();
+
             _ = _jsonRpc.NotifyAsync("OnAfterBrowserCreated", _id, browser.GetHost().GetWindowHandle().ToInt32());
+
+            var observer = new CefSharpDevMessageObserver();
+            observer.OnDevToolsAgentDetached((b) =>
+            {
+                _ = _jsonRpc.NotifyAsync("OnDevToolsAgentDetached", _id);
+            });
+            observer.OnDevToolsMessage((b, m) =>
+            {
+                using var reader = new StreamReader(m);
+                var msg = reader.ReadToEnd();
+
+                _ = _jsonRpc.NotifyAsync("OnDevToolsMessage", _id, msg);
+            });
+
+            _devtoolsMessageObserver = observer;
+
+            _devtoolsRegistration = host.AddDevToolsMessageObserver(_devtoolsMessageObserver);
+
+            var devToolsClient = browser.GetDevToolsClient();
+
+            //TODO: Do we need perforamnce and Log enabled?
+            var devToolsEnableTask = Task.WhenAll(devToolsClient.Page.EnableAsync(),
+                devToolsClient.Page.SetLifecycleEventsEnabledAsync(true),
+                devToolsClient.Runtime.EnableAsync(),
+                devToolsClient.Network.EnableAsync(),
+                devToolsClient.Performance.EnableAsync(),
+                devToolsClient.Log.EnableAsync());
+
+            _ = devToolsEnableTask.ContinueWith(t =>
+            {
+                ((IDisposable)devToolsClient).Dispose();
+
+                _ = _jsonRpc.NotifyAsync("OnDevToolsReady", _id);
+
+            }, TaskScheduler.Default);            
         }
 
         /// <summary>
@@ -672,6 +715,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             if (disposing)
             {
+                _devtoolsRegistration?.Dispose();
+                _devtoolsRegistration = null;
+                _devtoolsMessageObserver?.Dispose();
+                _devtoolsMessageObserver = null;
+
                 CanExecuteJavascriptInMainFrame = false;
                 Interlocked.Exchange(ref browserInitialized, 0);
 

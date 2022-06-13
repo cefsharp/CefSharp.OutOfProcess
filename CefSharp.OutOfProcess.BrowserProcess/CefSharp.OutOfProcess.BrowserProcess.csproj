@@ -8,6 +8,7 @@
     <SelfContained>false</SelfContained>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <LangVersion>Latest</LangVersion>
     <!--<CefSharpBuildAction>NoAction</CefSharpBuildAction>-->
   </PropertyGroup>
 

@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Brows
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.WinForms", "CefSharp.OutOfProcess.WinForms\CefSharp.OutOfProcess.WinForms.csproj", "{8287C019-2720-47D5-8077-1A2DADB510E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CefSharp.OutOfProcess.Core", "CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj", "{6ED4E6BF-F43A-429C-87FD-E66203EEC348}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Core", "CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj", "{6ED4E6BF-F43A-429C-87FD-E66203EEC348}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.DevTools.OutOfProcess", "CefSharp.Puppeteer\lib\PuppeteerSharp\CefSharp.DevTools.OutOfProcess.csproj", "{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Release|Any CPU.Build.0 = Release|Any CPU
+		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
