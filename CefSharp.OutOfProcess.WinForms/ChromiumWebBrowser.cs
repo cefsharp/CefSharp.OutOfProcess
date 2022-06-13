@@ -1,27 +1,23 @@
 ﻿using System;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using CefSharp.OutOfProcess;
+using CefSharp.OutOfProcess.Internal;
 using CefSharp.Puppeteer;
 using PInvoke;
 
 namespace CefSharp.OutOfProcess.WinForms
 {
-    public class ChromiumWebBrowser : Control, IChromiumWebBrowser
+    public class ChromiumWebBrowser : Control, IChromiumWebBrowserInternal
     {
         private IntPtr _browserHwnd = IntPtr.Zero;
         private int _remoteThreadId = -1;
         private int _uiThreadId = -1;
-        private bool _disposed;
         private OutOfProcessHost _host;
         private readonly string _initialAddress;
         private int _id;
         private IDevToolsContext _devToolsContext;
-
-        int IChromiumWebBrowser.Id
-        {
-            get { return _id; }
-        }
+        private OutOfProcessConnectionTransport _devToolsContextConnectionTransport;
 
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
@@ -29,32 +25,50 @@ namespace CefSharp.OutOfProcess.WinForms
             _initialAddress = initialAddress;
         }
 
-        void IChromiumWebBrowser.SetBrowserHwnd(IntPtr hwnd)
+        /// <inheritdoc/>
+        int IChromiumWebBrowserInternal.Id
+        {
+            get { return _id; }
+        }
+
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.SetBrowserHwnd(IntPtr hwnd)
         {
             _browserHwnd = hwnd;
         }
 
-        /// <summary>
-        /// Gets the default size of the control.
-        /// </summary>
-        /// <value>
-        /// The default <see cref="T:System.Drawing.Size" /> of the control.
-        /// </value>
+        /// <inheritdoc/>
         protected override Size DefaultSize
         {
-            get { return new Size(200, 100); }
+            get { return new Size(640, 480); }
         }
 
+        /// <inheritdoc/>
+        public bool IsBrowserInitialized => _browserHwnd != IntPtr.Zero;
+
+        /// <inheritdoc/>
+        public string Address => _devToolsContext == null ? string.Empty : _devToolsContext.Url;
+
+        /// <inheritdoc/>
+        public Frame[] Frames => _devToolsContext == null ? null : _devToolsContext.Frames;
+
+        /// <inheritdoc/>
+        public Frame MainFrame => _devToolsContext == null ? null : _devToolsContext.MainFrame;
+
+        /// <inheritdoc/>
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
 
             _host.CreateBrowser(this, Handle, url: _initialAddress, out _id);
 
-            var connection = Connection.Attach(new OutOfProcessConnectionTransport(_id, _host));
+            _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
+
+            var connection = Connection.Attach(_devToolsContextConnectionTransport);
             _devToolsContext = DevToolsContext.CreateForOutOfProcess(connection);
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -70,7 +84,6 @@ namespace CefSharp.OutOfProcess.WinForms
                 _uiThreadId = -1;
 
                 _browserHwnd = IntPtr.Zero;
-                _disposed = true;
 
                 _host?.CloseBrowser(_id);
                 _host = null;
@@ -92,6 +105,7 @@ namespace CefSharp.OutOfProcess.WinForms
             base.OnVisibleChanged(e);
         }
 
+        /// <inheritdoc/>
         protected override void OnSizeChanged(EventArgs e)
         {
             ResizeBrowser(Width, Height);
@@ -146,26 +160,45 @@ namespace CefSharp.OutOfProcess.WinForms
             }
         }
 
-        public void OnDevToolsMessage(string jsonMsg)
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.OnDevToolsMessage(string jsonMsg)
         {
-            if(_devToolsContext != null)
-            {
-                //TODO: This is messy, cleanup the ownership to improve this
-                _devToolsContext = (DevToolsContext)_devToolsContext;
-                var transport = _devToolsContext.Client.Transport as OutOfProcessConnectionTransport;
-
-                transport.InvokeMessageReceived(jsonMsg);
-            }
+            _devToolsContextConnectionTransport?.InvokeMessageReceived(jsonMsg);
         }
 
-        public void OnDevToolsReady()
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.OnDevToolsReady()
         {
             var ctx = (DevToolsContext)_devToolsContext;
 
             _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
             {
                 //NOW the user can start using the devtools context
-            });            
+            }, TaskScheduler.Current);
+        }
+
+        /// <inheritdoc/>
+        public void LoadUrl(string url)
+        {
+            _ = _devToolsContext.GoToAsync(url);
+        }
+
+        /// <inheritdoc/>
+        public Task<Response> LoadUrlAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
+        {
+            return _devToolsContext.GoToAsync(url, timeout, waitUntil);
+        }
+
+        /// <inheritdoc/>
+        public Task<Response> GoBackAsync(NavigationOptions options = null)
+        {
+            return _devToolsContext.GoBackAsync(options);
+        }
+
+        /// <inheritdoc/>
+        public Task<Response> GoForwardAsync(NavigationOptions options = null)
+        {
+            return _devToolsContext.GoForwardAsync(options);
         }
     }
 }

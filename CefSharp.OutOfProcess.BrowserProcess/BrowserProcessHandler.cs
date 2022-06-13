@@ -76,7 +76,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var threadId = Kernel32.GetCurrentThreadId();
 
-            _ = _jsonRpc.NotifyAsync("OnContextInitialized", threadId);
+            _ = _jsonRpc.NotifyAsync("OnContextInitialized", threadId, Cef.CefSharpVersion, Cef.CefVersion, Cef.ChromiumVersion);
         }
 
         protected override void Dispose(bool disposing)

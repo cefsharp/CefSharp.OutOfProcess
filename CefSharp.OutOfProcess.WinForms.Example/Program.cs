@@ -14,7 +14,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new HostForm());
+            Application.Run(new BrowserForm());
         }
     }
 }

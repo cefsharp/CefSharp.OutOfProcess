@@ -1,4 +1,5 @@
-﻿using PInvoke;
+﻿using CefSharp.OutOfProcess.Internal;
+using PInvoke;
 using StreamJsonRpc;
 using System;
 using System.Collections.Concurrent;
@@ -17,11 +18,14 @@ namespace CefSharp.OutOfProcess
 
         private Process _browserProcess;
         private JsonRpc _jsonRpc;
+        private string _cefSharpVersion;
+        private string _cefVersion;
+        private string _chromiumVersion;
         private int _uiThreadId;
         private int _remoteuiThreadId;
         private int _browserIdentifier = 1;
         private string _outofProcessFilePath;
-        private ConcurrentDictionary<int, IChromiumWebBrowser> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowser>();
+        private ConcurrentDictionary<int, IChromiumWebBrowserInternal> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowserInternal>();
 
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -30,7 +34,22 @@ namespace CefSharp.OutOfProcess
             _outofProcessFilePath = path;
         }
 
-        public bool CreateBrowser(IChromiumWebBrowser browser, IntPtr handle, string url, out int id)
+        public string CefSharpVerson
+        {
+            get { return _cefSharpVersion; }
+        }
+
+        public string CefVersion
+        {
+            get { return _cefVersion; }
+        }
+
+        public string ChromiumVersion
+        {
+            get { return _chromiumVersion; }
+        }
+
+        public bool CreateBrowser(IChromiumWebBrowserInternal browser, IntPtr handle, string url, out int id)
         {
             id = _browserIdentifier++;
             _ = _jsonRpc.NotifyAsync("CreateBrowser", handle.ToInt32(), url, id);
@@ -38,7 +57,7 @@ namespace CefSharp.OutOfProcess
             return _browsers.TryAdd(id, browser);
         }
 
-        internal Task SendDevToolsMessage(int browserId, string message)
+        internal Task SendDevToolsMessageAsync(int browserId, string message)
         {
             return _jsonRpc.NotifyAsync("SendDevToolsMessage", browserId, message);            
         }
@@ -75,9 +94,12 @@ namespace CefSharp.OutOfProcess
                 //var attached = User32.AttachThreadInput(_remoteThreadId, _uiThreadId, true);
             });
 
-            _jsonRpc.AddLocalRpcMethod("OnContextInitialized", (Action<int>) delegate (int threadId)
+            _jsonRpc.AddLocalRpcMethod("OnContextInitialized", (Action<int, string, string, string>) delegate (int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion)
             {
                 _remoteuiThreadId = threadId;
+                _cefSharpVersion = cefSharpVersion;
+                _cefVersion = cefVersion;
+                _chromiumVersion = chromiumVersion;
 
                 _processInitialized.TrySetResult(this);
 
@@ -118,7 +140,7 @@ namespace CefSharp.OutOfProcess
 
         public void Dispose()
         {
-            _jsonRpc?.NotifyAsync("CloseHost");
+            _ = _jsonRpc?.NotifyAsync("CloseHost");
             _jsonRpc?.Dispose();
             _jsonRpc = null;
         }

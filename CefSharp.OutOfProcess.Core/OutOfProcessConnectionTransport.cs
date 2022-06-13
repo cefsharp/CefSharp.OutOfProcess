@@ -30,7 +30,7 @@ namespace CefSharp.OutOfProcess.WinForms
 
         public Task SendAsync(string message)
         {
-            return OutOfProcessHost.SendDevToolsMessage(BrowserId, message);
+            return OutOfProcessHost.SendDevToolsMessageAsync(BrowserId, message);
         }
 
         public void StopReading()
