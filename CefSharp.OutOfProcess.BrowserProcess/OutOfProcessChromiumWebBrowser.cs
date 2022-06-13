@@ -304,6 +304,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnStatusMessage(StatusMessageEventArgs args)
         {
             StatusMessage?.Invoke(this, args);
+
+            _ = _jsonRpc.NotifyAsync("StatusMessage", _id, args.Value);
         }
 
         /// <summary>
@@ -873,6 +875,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             Address = args.Address;
 
             AddressChanged?.Invoke(this, args);
+
+            _ = _jsonRpc.NotifyAsync("AddressChanged", _id, args.Address);
         }
 
         /// <summary>
@@ -884,6 +888,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             CanGoBack = args.CanGoBack;
             CanGoForward = args.CanGoForward;
             IsLoading = args.IsLoading;
+
+            _ = _jsonRpc.NotifyAsync("LoadingStateChange", _id, args.CanGoBack, args.CanGoForward, args.IsLoading);
         }
 
         /// <summary>
@@ -893,6 +899,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.SetTitle(TitleChangedEventArgs args)
         {
             TitleChanged?.Invoke(this, args);
+
+            _ = _jsonRpc.NotifyAsync("TitleChanged", _id, args.Title);
         }
 
         /// <summary>

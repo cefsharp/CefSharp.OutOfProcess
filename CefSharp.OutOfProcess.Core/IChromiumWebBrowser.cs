@@ -1,4 +1,5 @@
 ﻿using CefSharp.Puppeteer;
+using System;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess
@@ -8,6 +9,119 @@ namespace CefSharp.OutOfProcess
     /// </summary>
     public interface IChromiumWebBrowser
     {
+        /// <summary>
+        /// Occurs when the browser address changed.
+        /// </summary>
+        event EventHandler<AddressChangedEventArgs> AddressChanged;
+        /// <summary>
+        /// Occurs when document title changes.
+        /// </summary>
+        event EventHandler<TitleChangedEventArgs> TitleChanged;
+
+        /// <summary>
+        /// Event handler for changes to the status message.
+        /// </summary>
+        event EventHandler<StatusMessageEventArgs> StatusMessage;
+
+        /// <summary>
+        /// Event handler that will get called when the Loading state has changed.
+        /// This event will be fired twice. Once when loading is initiated either programmatically or
+        /// by user action, and once when loading is terminated due to completion, cancellation of failure. 
+        /// </summary>
+        event EventHandler<LoadingStateChangedEventArgs> LoadingStateChanged;
+
+        /// <summary>
+        /// Raised when the JavaScript <c>DOMContentLoaded</c> <see href="https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded"/> event is dispatched.
+        /// </summary>
+        event EventHandler DOMContentLoaded;
+
+        /// <summary>
+        /// Raised when the browser crashes
+        /// </summary>
+        event EventHandler<ErrorEventArgs> BrowserProcessCrashed;
+
+        /// <summary>
+        /// Raised when a frame is attached.
+        /// </summary>
+        event EventHandler<FrameEventArgs> FrameAttached;
+
+        /// <summary>
+        /// Raised when a frame is detached.
+        /// </summary>
+        event EventHandler<FrameEventArgs> FrameDetached;
+
+        /// <summary>
+        /// Raised when a frame is navigated to a new url.
+        /// </summary>
+        event EventHandler<FrameEventArgs> FrameNavigated;
+
+        /// <summary>
+        /// Raised when JavaScript within the page calls one of console API methods, e.g. <c>console.log</c> or <c>console.dir</c>. Also emitted if the page throws an error or a warning.
+        /// The arguments passed into <c>console.log</c> appear as arguments on the event handler.
+        /// </summary>
+        event EventHandler<ConsoleEventArgs> ConsoleMessage;
+
+        /// <summary>
+        /// Raised when the JavaScript <c>load</c> <see href="https://developer.mozilla.org/en-US/docs/Web/Events/load"/> event is dispatched.
+        /// </summary>
+        event EventHandler JavaScriptLoad;
+
+        /// <summary>
+        /// Raised when an uncaught exception happens within the browser.
+        /// </summary>
+        event EventHandler<PageErrorEventArgs> RuntimeExceptionThrown;
+
+        /// <summary>
+        /// Raised when the page opens a new tab or window.
+        /// </summary>
+        event EventHandler<PopupEventArgs> Popup;
+
+        /// <summary>
+        /// Raised when a browser issues a request. The <see cref="NetworkRequest"/> object is read-only.
+        /// In order to intercept and mutate requests, see <see cref="IDevToolsContext.SetRequestInterceptionAsync(bool)"/>
+        /// </summary>
+        event EventHandler<RequestEventArgs> NetworkRequest;
+
+        /// <summary>
+        /// Raised when a request fails, for example by timing out.
+        /// </summary>
+        event EventHandler<RequestEventArgs> NetworkRequestFailed;
+
+        /// <summary>
+        /// Raised when a request finishes successfully.
+        /// </summary>
+        event EventHandler<RequestEventArgs> NetworkRequestFinished;
+
+        /// <summary>
+        /// Raised when a request ended up loading from cache.
+        /// </summary>
+        event EventHandler<RequestEventArgs> NetworkRequestServedFromCache;
+
+        /// <summary>
+        /// Raised when a <see cref="NetworkResponse"/> is received.
+        /// </summary>
+        /// <example>
+        /// An example of handling <see cref="NetworkResponse"/> event:
+        /// <code>
+        /// <![CDATA[
+        /// var tcs = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        /// browser.Response += async(sender, e) =>
+        /// {
+        ///     if (e.Response.Url.Contains("script.js"))
+        ///     {
+        ///         tcs.TrySetResult(await e.Response.TextAsync());
+        ///     }
+        /// };
+        ///
+        /// await Task.WhenAll(
+        ///     browser.LoadUrlAsync(TestConstants.ServerUrl + "/grid.html"),
+        ///     tcs.Task);
+        /// Console.WriteLine(await tcs.Task);
+        /// ]]>
+        /// </code>
+        /// </example>
+        event EventHandler<ResponseCreatedEventArgs> NetworkResponse;
+
         /// <summary>
         /// Loads the specified <paramref name="url"/> in the Main Frame.
         /// </summary>
@@ -41,23 +155,23 @@ namespace CefSharp.OutOfProcess
         string Address { get; }
 
         /// <summary>
-        /// Gets all frames attached to the page.
+        /// Gets all frames attached to the browser.
         /// </summary>
-        /// <value>An array of all frames attached to the page.</value>
+        /// <value>An array of all frames attached to the browser.</value>
         Frame[] Frames { get; }
 
         /// <summary>
-        /// Gets page's main frame
+        /// Gets browser's main frame
         /// </summary>
         /// <remarks>
-        /// Page is guaranteed to have a main frame which persists during navigations.
+        /// Browser is guaranteed to have a main frame which persists during navigations.
         /// </remarks>
         Frame MainFrame { get; }
 
         /// <summary>
         /// Navigates to an url
         /// </summary>
-        /// <param name="url">URL to navigate page to. The url should include scheme, e.g. https://.</param>
+        /// <param name="url">URL to navigate to. The url should include scheme, e.g. https://.</param>
         /// <param name="timeout">Maximum navigation time in milliseconds, defaults to 30 seconds, pass <c>0</c> to disable timeout. </param>
         /// <param name="waitUntil">When to consider navigation succeeded, defaults to <see cref="WaitUntilNavigation.Load"/>. Given an array of <see cref="WaitUntilNavigation"/>, navigation is considered to be successful after all events have been fired</param>
         /// <returns>Task which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect</returns>

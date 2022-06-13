@@ -25,5 +25,11 @@ namespace CefSharp.OutOfProcess.Internal
         /// DevTools is ready in the browser process to create the DevToolsContext
         /// </summary>
         void OnDevToolsReady();
+
+        void SetStatusMessage(string msg);
+        void SetTitle(string title);
+
+        void SetAddress(string address);
+        void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading);
     }
 }

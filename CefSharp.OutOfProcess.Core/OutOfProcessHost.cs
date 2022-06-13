@@ -34,7 +34,7 @@ namespace CefSharp.OutOfProcess
             _outofProcessFilePath = path;
         }
 
-        public string CefSharpVerson
+        public string CefSharpVersion
         {
             get { return _cefSharpVersion; }
         }
@@ -127,6 +127,38 @@ namespace CefSharp.OutOfProcess
                 if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
                 {
                     chromiumWebBrowser.OnDevToolsReady();
+                }
+            });
+
+            _jsonRpc.AddLocalRpcMethod("LoadingStateChange", (Action<int, bool, bool, bool>)delegate (int browserId, bool canGoBack, bool canGoFordware, bool isLoading)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    chromiumWebBrowser.SetLoadingStateChange(canGoBack, canGoFordware, isLoading);
+                }
+            });
+
+            _jsonRpc.AddLocalRpcMethod("TitleChanged", (Action<int, string>)delegate (int browserId, string title)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    chromiumWebBrowser.SetTitle(title);
+                }
+            });
+
+            _jsonRpc.AddLocalRpcMethod("StatusMessage", (Action<int, string>)delegate (int browserId, string msg)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    chromiumWebBrowser.SetStatusMessage(msg);
+                }
+            });            
+
+            _jsonRpc.AddLocalRpcMethod("AddressChanged", (Action<int, string>)delegate (int browserId, string title)
+            {
+                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+                {
+                    chromiumWebBrowser.SetAddress(title);
                 }
             });
 

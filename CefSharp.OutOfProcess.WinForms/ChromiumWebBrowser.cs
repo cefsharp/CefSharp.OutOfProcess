@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp.OutOfProcess.Internal;
@@ -18,6 +19,43 @@ namespace CefSharp.OutOfProcess.WinForms
         private int _id;
         private IDevToolsContext _devToolsContext;
         private OutOfProcessConnectionTransport _devToolsContextConnectionTransport;
+
+        /// <inheritdoc/>
+        public event EventHandler DOMContentLoaded;
+        /// <inheritdoc/>
+        public event EventHandler<ErrorEventArgs> BrowserProcessCrashed;
+        /// <inheritdoc/>
+        public event EventHandler<FrameEventArgs> FrameAttached;
+        /// <inheritdoc/>
+        public event EventHandler<FrameEventArgs> FrameDetached;
+        /// <inheritdoc/>
+        public event EventHandler<FrameEventArgs> FrameNavigated;
+        /// <inheritdoc/>
+        public event EventHandler JavaScriptLoad;
+        /// <inheritdoc/>
+        public event EventHandler<PageErrorEventArgs> RuntimeExceptionThrown;
+        /// <inheritdoc/>
+        public event EventHandler<Puppeteer.PopupEventArgs> Popup;
+        /// <inheritdoc/>
+        public event EventHandler<RequestEventArgs> NetworkRequest;
+        /// <inheritdoc/>
+        public event EventHandler<RequestEventArgs> NetworkRequestFailed;
+        /// <inheritdoc/>
+        public event EventHandler<RequestEventArgs> NetworkRequestFinished;
+        /// <inheritdoc/>
+        public event EventHandler<RequestEventArgs> NetworkRequestServedFromCache;
+        /// <inheritdoc/>
+        public event EventHandler<ResponseCreatedEventArgs> NetworkResponse;
+        /// <inheritdoc/>
+        public event EventHandler<AddressChangedEventArgs> AddressChanged;
+        /// <inheritdoc/>
+        public event EventHandler<TitleChangedEventArgs> TitleChanged;
+        /// <inheritdoc/>
+        public event EventHandler<LoadingStateChangedEventArgs> LoadingStateChanged;
+        /// <inheritdoc/>
+        public event EventHandler<StatusMessageEventArgs> StatusMessage;
+        /// <inheritdoc/>
+        public event EventHandler<ConsoleEventArgs> ConsoleMessage;
 
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
@@ -60,6 +98,8 @@ namespace CefSharp.OutOfProcess.WinForms
         {
             base.OnHandleCreated(e);
 
+            var size = Size;
+
             _host.CreateBrowser(this, Handle, url: _initialAddress, out _id);
 
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
@@ -79,6 +119,36 @@ namespace CefSharp.OutOfProcess.WinForms
                 {
                     //User32.AttachThreadInput(_remoteThreadId, _uiThreadId, false);
                 }
+
+                _devToolsContext.DOMContentLoaded -= DOMContentLoaded;
+                _devToolsContext.Error -= BrowserProcessCrashed;
+                _devToolsContext.FrameAttached -= FrameAttached;
+                _devToolsContext.FrameDetached -= FrameDetached;
+                _devToolsContext.FrameNavigated -= FrameNavigated;
+                _devToolsContext.Load -= JavaScriptLoad;
+                _devToolsContext.PageError -= RuntimeExceptionThrown;
+                _devToolsContext.Popup -= Popup;
+                _devToolsContext.Request -= NetworkRequest;
+                _devToolsContext.RequestFailed -= NetworkRequestFailed;
+                _devToolsContext.RequestFinished -= NetworkRequestFinished;
+                _devToolsContext.RequestServedFromCache -= NetworkRequestServedFromCache;
+                _devToolsContext.Response -= NetworkResponse;
+                _devToolsContext.Console -= ConsoleMessage;
+
+                DOMContentLoaded = null;
+                BrowserProcessCrashed = null;
+                FrameAttached = null;
+                FrameDetached = null;
+                FrameNavigated = null;
+                JavaScriptLoad = null;
+                RuntimeExceptionThrown = null;
+                Popup = null;
+                NetworkRequest = null;
+                NetworkRequestFailed = null;
+                NetworkRequestFinished = null;
+                NetworkRequestServedFromCache = null;
+                NetworkResponse = null;
+                ConsoleMessage = null;
 
                 _remoteThreadId = -1;
                 _uiThreadId = -1;
@@ -171,10 +241,26 @@ namespace CefSharp.OutOfProcess.WinForms
         {
             var ctx = (DevToolsContext)_devToolsContext;
 
+            ctx.DOMContentLoaded += DOMContentLoaded;
+            ctx.Error += BrowserProcessCrashed;
+            ctx.FrameAttached += FrameAttached;
+            ctx.FrameDetached += FrameDetached;
+            ctx.FrameNavigated += FrameNavigated;
+            ctx.Load += JavaScriptLoad;
+            ctx.PageError += RuntimeExceptionThrown;
+            ctx.Popup += Popup;
+            ctx.Request += NetworkRequest;
+            ctx.RequestFailed += NetworkRequestFailed;
+            ctx.RequestFinished += NetworkRequestFinished;
+            ctx.RequestServedFromCache += NetworkRequestServedFromCache;
+            ctx.Response += NetworkResponse;
+            ctx.Console += ConsoleMessage;
+
             _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
-            {
-                //NOW the user can start using the devtools context
-            }, TaskScheduler.Current);
+                {
+
+                    //NOW the user can start using the devtools context
+                }, TaskScheduler.Current);
         }
 
         /// <inheritdoc/>
@@ -199,6 +285,26 @@ namespace CefSharp.OutOfProcess.WinForms
         public Task<Response> GoForwardAsync(NavigationOptions options = null)
         {
             return _devToolsContext.GoForwardAsync(options);
+        }
+
+        public void SetTitle(string title)
+        {
+            TitleChanged?.Invoke(this, new TitleChangedEventArgs(title));
+        }
+
+        public void SetAddress(string address)
+        {
+            AddressChanged?.Invoke(this, new AddressChangedEventArgs(address));
+        }
+
+        public void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading)
+        {
+            LoadingStateChanged?.Invoke(this, new LoadingStateChangedEventArgs(canGoBack, canGoForward, isLoading));
+        }
+
+        public void SetStatusMessage(string msg)
+        {
+            StatusMessage?.Invoke(this, new StatusMessageEventArgs(msg));
         }
     }
 }

@@ -13,4 +13,8 @@
     <ProjectReference Include="..\CefSharp.Puppeteer\lib\PuppeteerSharp\CefSharp.DevTools.OutOfProcess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="EventArgs\" />
+  </ItemGroup>
+
 </Project>

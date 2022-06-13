@@ -3,9 +3,6 @@
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,25 +18,38 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 
             var browser = new ChromiumWebBrowser(outOfProcessHost, url)
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                Bounds = this.Bounds
             };
 
             browserPanel.Controls.Add(browser);
 
             Browser = browser;
 
-            //browser.LoadingStateChanged += OnBrowserLoadingStateChanged;
-            //browser.ConsoleMessage += OnBrowserConsoleMessage;
-            //browser.TitleChanged += OnBrowserTitleChanged;
-            //browser.AddressChanged += OnBrowserAddressChanged;
-            //browser.StatusMessage += OnBrowserStatusMessage;
-            //browser.IsBrowserInitializedChanged += OnIsBrowserInitializedChanged;
+            browser.LoadingStateChanged += OnBrowserLoadingStateChanged;
+            browser.ConsoleMessage += OnBrowserConsoleMessage;
+            browser.TitleChanged += OnBrowserTitleChanged;
+            browser.AddressChanged += OnBrowserAddressChanged;
+            browser.StatusMessage += OnBrowserStatusMessage;
+            browser.NetworkRequestFailed += OnBrowserNetworkRequestFailed;
             //browser.LoadError += OnLoadError;
 
-
-            //var version = string.Format("Chromium: {0}, CEF: {1}, CefSharp: {2}", Cef.ChromiumVersion, Cef.CefVersion, Cef.CefSharpVersion);
+            var version = string.Format("Chromium: {0}, CEF: {1}, CefSharp: {2}", outOfProcessHost.ChromiumVersion, outOfProcessHost.CefVersion, outOfProcessHost.CefSharpVersion);
             //Set label directly, don't use DisplayOutput as call would be a NOOP (no valid handle yet).
-            //outputLabel.Text = version;
+            outputLabel.Text = version;
+        }
+
+        private  async void OnBrowserNetworkRequestFailed(object sender, Puppeteer.RequestEventArgs args)
+        {
+            var request = args.Request;
+
+            var errorHtml = string.Format("<html><body><h2>Failed to load URL {0} with error {1} ({2}).</h2></body></html>",
+                                              request.Url, request.Failure);
+
+            await Browser.MainFrame.SetContentAsync(errorHtml);
+
+            //AddressChanged isn't called for failed Urls so we need to manually update the Url TextBox
+            this.InvokeOnUiThreadIfRequired(() => urlTextBox.Text = request.Url);
         }
 
         /// <summary>
@@ -56,59 +66,34 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             base.Dispose(disposing);
         }
 
-        //private void OnLoadError(object sender, LoadErrorEventArgs args)
-        //{
-        //    //Aborted is generally safe to ignore
-        //    //Actions like starting a download will trigger an Aborted error
-        //    //which doesn't require any user action.
-        //    if(args.ErrorCode == CefErrorCode.Aborted)
-        //    {
-        //        return;
-        //    }
+        private void OnBrowserConsoleMessage(object sender, Puppeteer.ConsoleEventArgs args)
+        {
+            
+            DisplayOutput(string.Format("Line: {0}, Source: {1}, Message: {2}", args.Message.Location.LineNumber, args.Message.Location.URL, args.Message.Text));
+        }
 
-        //    //Don't display an error for external protocols such as mailto which
-        //    //we might want to open in the default viewer
-        //    if (args.ErrorCode == CefErrorCode.UnknownUrlScheme && args.Frame.Url.StartsWith("mailto"))
-        //    {
-        //        return;
-        //    }
+        private void OnBrowserStatusMessage(object sender, StatusMessageEventArgs args)
+        {
+            this.InvokeOnUiThreadIfRequired(() => statusLabel.Text = args.Value);
+        }
 
-        //    var errorHtml = string.Format("<html><body><h2>Failed to load URL {0} with error {1} ({2}).</h2></body></html>",
-        //                                      args.FailedUrl, args.ErrorText, args.ErrorCode);
+        private void OnBrowserLoadingStateChanged(object sender, LoadingStateChangedEventArgs args)
+        {
+            SetCanGoBack(args.CanGoBack);
+            SetCanGoForward(args.CanGoForward);
 
-        //    _ = args.Browser.SetMainFrameDocumentContentAsync(errorHtml);
+            this.InvokeOnUiThreadIfRequired(() => SetIsLoading(args.IsLoading));
+        }
 
-        //    //AddressChanged isn't called for failed Urls so we need to manually update the Url TextBox
-        //    this.InvokeOnUiThreadIfRequired(() => urlTextBox.Text = args.FailedUrl);
-        //}
+        private void OnBrowserTitleChanged(object sender, TitleChangedEventArgs args)
+        {
+            this.InvokeOnUiThreadIfRequired(() => Parent.Text = args.Title);
+        }
 
-        //private void OnBrowserConsoleMessage(object sender, ConsoleMessageEventArgs args)
-        //{
-        //    DisplayOutput(string.Format("Line: {0}, Source: {1}, Message: {2}", args.Line, args.Source, args.Message));
-        //}
-
-        //private void OnBrowserStatusMessage(object sender, StatusMessageEventArgs args)
-        //{
-        //    this.InvokeOnUiThreadIfRequired(() => statusLabel.Text = args.Value);
-        //}
-
-        //private void OnBrowserLoadingStateChanged(object sender, LoadingStateChangedEventArgs args)
-        //{
-        //    SetCanGoBack(args.CanGoBack);
-        //    SetCanGoForward(args.CanGoForward);
-
-        //    this.InvokeOnUiThreadIfRequired(() => SetIsLoading(args.IsLoading));
-        //}
-
-        //private void OnBrowserTitleChanged(object sender, TitleChangedEventArgs args)
-        //{
-        //    this.InvokeOnUiThreadIfRequired(() => Parent.Text = args.Title);
-        //}
-
-        //private void OnBrowserAddressChanged(object sender, AddressChangedEventArgs args)
-        //{
-        //    this.InvokeOnUiThreadIfRequired(() => urlTextBox.Text = args.Address);
-        //}
+        private void OnBrowserAddressChanged(object sender, AddressChangedEventArgs args)
+        {
+            this.InvokeOnUiThreadIfRequired(() => urlTextBox.Text = args.Address);
+        }
 
         private void SetCanGoBack(bool canGoBack)
         {

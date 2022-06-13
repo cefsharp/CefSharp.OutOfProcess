@@ -59,7 +59,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 _ = CefThread.ExecuteOnUiThread(() =>
                 {
-
                     var browser = new OutOfProcessChromiumWebBrowser(_jsonRpc, id, url);
 
                     var windowInfo = new WindowInfo();

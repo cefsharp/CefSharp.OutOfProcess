@@ -108,7 +108,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 
         private void AboutToolStripMenuItemClick(object sender, EventArgs e)
         {
-            new AboutBox(_outOfProcessHost.CefSharpVerson, _outOfProcessHost.CefVersion, _outOfProcessHost.ChromiumVersion).ShowDialog();
+            new AboutBox(_outOfProcessHost.CefSharpVersion, _outOfProcessHost.CefVersion, _outOfProcessHost.ChromiumVersion).ShowDialog();
         }
 
         private void FindMenuItemClick(object sender, EventArgs e)
