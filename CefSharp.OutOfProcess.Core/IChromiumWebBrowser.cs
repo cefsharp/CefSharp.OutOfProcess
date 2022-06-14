@@ -7,7 +7,7 @@ namespace CefSharp.OutOfProcess
     /// <summary>
     /// OutOfProcess ChromiumWebBrowser
     /// </summary>
-    public interface IChromiumWebBrowser
+    public interface IChromiumWebBrowser : IDisposable
     {
         /// <summary>
         /// Occurs when the browser address changed.
@@ -96,6 +96,11 @@ namespace CefSharp.OutOfProcess
         /// Raised when a request ended up loading from cache.
         /// </summary>
         event EventHandler<RequestEventArgs> NetworkRequestServedFromCache;
+
+        /// <summary>
+        /// Fired for top level page lifecycle events such as navigation, load, paint, etc.
+        /// </summary>
+        event EventHandler<LifecycleEventArgs> LifecycleEvent;
 
         /// <summary>
         /// Raised when a <see cref="NetworkResponse"/> is received.

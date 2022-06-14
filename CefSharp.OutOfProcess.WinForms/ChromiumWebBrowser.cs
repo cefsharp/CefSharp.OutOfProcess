@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp.OutOfProcess.Internal;
@@ -19,6 +18,7 @@ namespace CefSharp.OutOfProcess.WinForms
         private int _id;
         private IDevToolsContext _devToolsContext;
         private OutOfProcessConnectionTransport _devToolsContextConnectionTransport;
+        private bool _devToolsReady;
 
         /// <inheritdoc/>
         public event EventHandler DOMContentLoaded;
@@ -56,6 +56,8 @@ namespace CefSharp.OutOfProcess.WinForms
         public event EventHandler<StatusMessageEventArgs> StatusMessage;
         /// <inheritdoc/>
         public event EventHandler<ConsoleEventArgs> ConsoleMessage;
+        /// <inheritdoc/>
+        public event EventHandler<LifecycleEventArgs> LifecycleEvent;
 
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
@@ -81,6 +83,22 @@ namespace CefSharp.OutOfProcess.WinForms
             get { return new Size(640, 480); }
         }
 
+        /// <summary>
+        /// DevToolsContext - provides communication with the underlying browser
+        /// </summary>
+        public IDevToolsContext DevToolsContext
+        {
+            get
+            {
+                if (_devToolsReady)
+                {
+                    return _devToolsContext;
+                }
+
+                return default;
+            }
+        }
+
         /// <inheritdoc/>
         public bool IsBrowserInitialized => _browserHwnd != IntPtr.Zero;
 
@@ -104,8 +122,8 @@ namespace CefSharp.OutOfProcess.WinForms
 
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
-            var connection = Connection.Attach(_devToolsContextConnectionTransport);
-            _devToolsContext = DevToolsContext.CreateForOutOfProcess(connection);
+            var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
+            _devToolsContext = Puppeteer.DevToolsContext.CreateForOutOfProcess(connection);
         }
 
         /// <inheritdoc/>
@@ -239,6 +257,8 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         void IChromiumWebBrowserInternal.OnDevToolsReady()
         {
+            _devToolsReady = true;
+
             var ctx = (DevToolsContext)_devToolsContext;
 
             ctx.DOMContentLoaded += DOMContentLoaded;

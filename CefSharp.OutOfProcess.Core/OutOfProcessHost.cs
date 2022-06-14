@@ -34,21 +34,55 @@ namespace CefSharp.OutOfProcess
             _outofProcessFilePath = path;
         }
 
+        /// <summary>
+        /// UI Thread assocuated with this <see cref="OutOfProcessHost"/>
+        /// </summary>
+        public int UiThreadId
+        {
+            get { return _uiThreadId; }
+        }
+
+        /// <summary>
+        /// Thread Id of the UI Thread running in the Browser Process
+        /// </summary>
+        public int RemoteUiThreadId
+        {
+            get { return _remoteuiThreadId; }
+        }
+
+        /// <summary>
+        /// CefSharp Version
+        /// </summary>
         public string CefSharpVersion
         {
             get { return _cefSharpVersion; }
         }
 
+        /// <summary>
+        /// Cef Version
+        /// </summary>
         public string CefVersion
         {
             get { return _cefVersion; }
         }
 
+        /// <summary>
+        /// Chromium Version
+        /// </summary>
         public string ChromiumVersion
         {
             get { return _chromiumVersion; }
         }
 
+        /// <summary>
+        /// Sends an IPC message to the Browser Process instructing it
+        /// to create a new Out of process browser
+        /// </summary>
+        /// <param name="browser">The <see cref="IChromiumWebBrowserInternal"/> that will host the browser</param>
+        /// <param name="handle">handle used to host the control</param>
+        /// <param name="url"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public bool CreateBrowser(IChromiumWebBrowserInternal browser, IntPtr handle, string url, out int id)
         {
             id = _browserIdentifier++;
