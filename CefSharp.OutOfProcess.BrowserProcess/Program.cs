@@ -10,6 +10,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
     {
         private static bool _disposed;
 
+        [STAThread]
         public static int Main(string[] args)
         {
             Cef.EnableHighDPISupport();
@@ -33,7 +34,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             Cef.Initialize(settings, performDependencyCheck:true, browserProcessHandler: browserProcessHandler);
 
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
                 parentProcess.WaitForExit();
 
@@ -42,7 +43,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                     return;
                 }
 
-                CefThread.ExecuteOnUiThread(() =>
+                _ = CefThread.ExecuteOnUiThread(() =>
                 {
                     Cef.QuitMessageLoop();
 
