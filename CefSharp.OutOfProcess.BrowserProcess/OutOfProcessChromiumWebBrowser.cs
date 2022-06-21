@@ -333,7 +333,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 return;
             }
 
-            this._browser = browser;
+            _browser = browser;
             BrowserCore = browser;
             Interlocked.Exchange(ref _browserInitialized, 1);
 
@@ -610,7 +610,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             _id = id;
             RequestContext = requestContext;
-            this._outofProcessHostRpc = outOfProcessServer;
+            _outofProcessHostRpc = outOfProcessServer;
 
             Cef.AddDisposable(this);
             Address = address;
@@ -743,25 +743,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <inheritdoc/>
         public void Load(string url)
         {
-            if (IsDisposed)
-            {
-                return;
-            }
-
-            //There's a small window here between CreateBrowser
-            //and OnAfterBrowserCreated where the Address prop
-            //will be updated, though LoadUrl won't be called.
-            if (IsBrowserInitialized)
-            {
-                using (var frame = this.GetMainFrame())
-                {
-                    frame.LoadUrl(url);
-                }
-            }
-            else
-            {
-                Address = url;
-            }
+            throw new NotImplementedException();
         }
 
         /// <summary>
