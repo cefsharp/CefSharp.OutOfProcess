@@ -35,7 +35,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// JSON RPC used for IPC with host
         /// </summary>
-        private IOutOfProcessServer outOfProcessServer;
+        private IOutOfProcessHostRpc outOfProcessServer;
 
         /// <summary>
         /// Flag to guard the creation of the underlying browser - only one instance can be created
@@ -670,7 +670,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// you have a chance to subscribe to the event as the CEF Browser is created async. (Issue https://github.com/cefsharp/CefSharp/issues/3552).
         /// </param>
         /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
-        public OutOfProcessChromiumWebBrowser(IOutOfProcessServer outOfProcessServer, int id, string address = "",
+        public OutOfProcessChromiumWebBrowser(IOutOfProcessHostRpc outOfProcessServer, int id, string address = "",
             IRequestContext requestContext = null)
         {
             _id = id;

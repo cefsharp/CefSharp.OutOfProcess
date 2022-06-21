@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess
 {
-    public class OutOfProcessHost : IOutOfProcessServer, IDisposable
+    public class OutOfProcessHost : IOutOfProcessHostRpc, IDisposable
     {
         /// <summary>
         /// The CefSharp.OutOfProcess.BrowserProcess.exe name
@@ -19,7 +19,7 @@ namespace CefSharp.OutOfProcess
 
         private Process _browserProcess;
         private JsonRpc _jsonRpc;
-        private IBrowserProcessServer _browserProcessServer;
+        private IOutOfProcessClientRpc _browserProcessServer;
         private string _cefSharpVersion;
         private string _cefVersion;
         private string _chromiumVersion;
@@ -117,15 +117,15 @@ namespace CefSharp.OutOfProcess
 
             _jsonRpc = JsonRpc.Attach(_browserProcess.StandardInput.BaseStream, _browserProcess.StandardOutput.BaseStream);
 
-            _browserProcessServer = _jsonRpc.Attach<IBrowserProcessServer>();
+            _browserProcessServer = _jsonRpc.Attach<IOutOfProcessClientRpc>();
             _jsonRpc.AllowModificationWhileListening = true;
-            _jsonRpc.AddLocalRpcTarget<IOutOfProcessServer>(this, null);
+            _jsonRpc.AddLocalRpcTarget<IOutOfProcessHostRpc>(this, null);
             _jsonRpc.AllowModificationWhileListening = false;
 
             _uiThreadId = Kernel32.GetCurrentThreadId();
         }
 
-        void IOutOfProcessServer.NotifyAddressChanged(int browserId, string address)
+        void IOutOfProcessHostRpc.NotifyAddressChanged(int browserId, string address)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -133,7 +133,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyBrowserCreated(int browserId, IntPtr browserHwnd)
+        void IOutOfProcessHostRpc.NotifyBrowserCreated(int browserId, IntPtr browserHwnd)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -141,7 +141,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion)
+        void IOutOfProcessHostRpc.NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion)
         {
             _remoteuiThreadId = threadId;
             _cefSharpVersion = cefSharpVersion;
@@ -151,7 +151,7 @@ namespace CefSharp.OutOfProcess
             _processInitialized.TrySetResult(this);
         }
 
-        void IOutOfProcessServer.NotifyDevToolsAgentDetached(int browserId)
+        void IOutOfProcessHostRpc.NotifyDevToolsAgentDetached(int browserId)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -159,7 +159,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyDevToolsMessage(int browserId, string devToolsMessage)
+        void IOutOfProcessHostRpc.NotifyDevToolsMessage(int browserId, string devToolsMessage)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -167,7 +167,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyDevToolsReady(int browserId)
+        void IOutOfProcessHostRpc.NotifyDevToolsReady(int browserId)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -175,7 +175,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyLoadingStateChange(int browserId, bool canGoBack, bool canGoForward, bool isLoading)
+        void IOutOfProcessHostRpc.NotifyLoadingStateChange(int browserId, bool canGoBack, bool canGoForward, bool isLoading)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -183,7 +183,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyStatusMessage(int browserId, string statusMessage)
+        void IOutOfProcessHostRpc.NotifyStatusMessage(int browserId, string statusMessage)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
@@ -191,7 +191,7 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        void IOutOfProcessServer.NotifyTitleChanged(int browserId, string title)
+        void IOutOfProcessHostRpc.NotifyTitleChanged(int browserId, string title)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {

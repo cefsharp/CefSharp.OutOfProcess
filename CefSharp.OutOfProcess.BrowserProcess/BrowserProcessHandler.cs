@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
-    public class BrowserProcessHandler : CefSharp.Handler.BrowserProcessHandler, IBrowserProcessServer
+    public class BrowserProcessHandler : CefSharp.Handler.BrowserProcessHandler, IOutOfProcessClientRpc
     {
         private readonly int _parentProcessId;
         private IList<OutOfProcessChromiumWebBrowser> _browsers = new List<OutOfProcessChromiumWebBrowser>();
@@ -18,7 +18,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// JSON RPC used for IPC with host
         /// </summary>
         private JsonRpc _jsonRpc;
-        private IOutOfProcessServer _outOfProcessServer;
+        private IOutOfProcessHostRpc _outOfProcessServer;
 
         public BrowserProcessHandler(int parentProcessId)
         {
@@ -30,9 +30,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             base.OnContextInitialized();
 
             _jsonRpc = JsonRpc.Attach(Console.OpenStandardOutput(), Console.OpenStandardInput());
-            _outOfProcessServer = _jsonRpc.Attach<IOutOfProcessServer>();
+            _outOfProcessServer = _jsonRpc.Attach<IOutOfProcessHostRpc>();
             _jsonRpc.AllowModificationWhileListening = true;
-            _jsonRpc.AddLocalRpcTarget<IBrowserProcessServer>(this, null);
+            _jsonRpc.AddLocalRpcTarget<IOutOfProcessClientRpc>(this, null);
             _jsonRpc.AllowModificationWhileListening = false;
 
             var threadId = Kernel32.GetCurrentThreadId();
@@ -51,7 +51,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             }
         }
 
-        Task IBrowserProcessServer.CloseBrowser(int browserId)
+        Task IOutOfProcessClientRpc.CloseBrowser(int browserId)
         {
             return CefThread.ExecuteOnUiThread(() =>
             {
@@ -65,7 +65,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
-        Task IBrowserProcessServer.SendDevToolsMessage(int browserId, string message)
+        Task IOutOfProcessClientRpc.SendDevToolsMessage(int browserId, string message)
         {
             return CefThread.ExecuteOnUiThread(() =>
             {
@@ -77,7 +77,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
-        Task IBrowserProcessServer.CloseHost()
+        Task IOutOfProcessClientRpc.CloseHost()
         {
             return CefThread.ExecuteOnUiThread(() =>
             {
@@ -87,7 +87,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
-        Task IBrowserProcessServer.CreateBrowser(IntPtr parentHwnd, string url, int id)
+        Task IOutOfProcessClientRpc.CreateBrowser(IntPtr parentHwnd, string url, int id)
         {
             //Debugger.Break();
 
