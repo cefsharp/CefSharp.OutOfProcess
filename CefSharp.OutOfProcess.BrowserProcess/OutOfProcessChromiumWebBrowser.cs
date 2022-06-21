@@ -64,16 +64,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         private IBrowser _browser;
 
         /// <summary>
-        /// Initial browser load task complection source
-        /// </summary>
-        private TaskCompletionSource<LoadUrlAsyncResponse> _initialLoadTaskCompletionSource = new TaskCompletionSource<LoadUrlAsyncResponse>();
-
-        /// <summary>
-        /// Initial browser load action
-        /// </summary>
-        private Action<bool?, CefErrorCode?> _initialLoadAction;
-
-        /// <summary>
         /// Id
         /// </summary>
         public int Id => _id;
@@ -314,8 +304,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnLoadError(LoadErrorEventArgs args)
         {
             LoadError?.Invoke(this, args);
-
-            _initialLoadAction?.Invoke(null, args.ErrorCode);
         }
 
         /// <summary>
@@ -347,11 +335,10 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             this._browser = browser;
             BrowserCore = browser;
-            _initialLoadAction = InitialLoad;
             Interlocked.Exchange(ref _browserInitialized, 1);
 
             var host = browser.GetHost();
-            _outofProcessHostRpc.NotifyBrowserCreated(_id, browser.GetHost().GetWindowHandle());
+            _outofProcessHostRpc.NotifyBrowserCreated(_id, host.GetWindowHandle());
 
             var observer = new CefSharpDevMessageObserver();
             observer.OnDevToolsAgentDetached((b) =>
@@ -395,37 +382,37 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <param name="args">The <see cref="LoadingStateChangedEventArgs"/> instance containing the event data.</param>
         void IWebBrowserInternal.SetLoadingStateChange(LoadingStateChangedEventArgs args)
         {
-            SetLoadingStateChange(args);
+            CanGoBack = args.CanGoBack;
+            CanGoForward = args.CanGoForward;
+            IsLoading = args.IsLoading;
+
+            _outofProcessHostRpc.NotifyLoadingStateChange(_id, args.CanGoBack, args.CanGoForward, args.IsLoading);
 
             LoadingStateChanged?.Invoke(this, args);
-
-            _initialLoadAction?.Invoke(args.IsLoading, null);
         }
 
         /// <inheritdoc/>
         public void LoadUrl(string url)
         {
-            Load(url);
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
         public Task<LoadUrlAsyncResponse> LoadUrlAsync(string url)
         {
-            //LoadUrlAsync is actually a static method so that CefSharp.Wpf.HwndHost can reuse the code
-            return CefSharp.WebBrowserExtensions.LoadUrlAsync(this, url);
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
         public Task<WaitForNavigationAsyncResponse> WaitForNavigationAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
         {
-            //WaitForNavigationAsync is actually a static method so that CefSharp.Wpf.HwndHost can reuse the code
-            return CefSharp.WebBrowserExtensions.WaitForNavigationAsync(this, timeout, cancellationToken);
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
         public Task<LoadUrlAsyncResponse> WaitForInitialLoadAsync()
         {
-            return _initialLoadTaskCompletionSource.Task;
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc/>
@@ -459,58 +446,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 return layoutMetricsResponse.CssContentSize;
             }
         }
-
-        private void InitialLoad(bool? isLoading, CefErrorCode? errorCode)
-        {
-            if (IsDisposed)
-            {
-                _initialLoadAction = null;
-
-                _initialLoadTaskCompletionSource.TrySetCanceled();
-
-                return;
-            }
-
-            if (isLoading.HasValue)
-            {
-                if (isLoading.Value)
-                {
-                    return;
-                }
-
-                _initialLoadAction = null;
-
-                var host = _browser?.GetHost();
-
-                var navEntry = host?.GetVisibleNavigationEntry();
-
-                int statusCode = navEntry?.HttpStatusCode ?? -1;
-
-                //By default 0 is some sort of error, we map that to -1
-                //so that it's clearer that something failed.
-                if (statusCode == 0)
-                {
-                    statusCode = -1;
-                }
-
-                _initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(CefErrorCode.None, statusCode));
-            }
-            else if (errorCode.HasValue)
-            {
-                //Actions that trigger a download will raise an aborted error.
-                //Generally speaking Aborted is safe to ignore
-                if (errorCode == CefErrorCode.Aborted)
-                {
-                    return;
-                }
-
-                _initialLoadAction = null;
-
-                _initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(errorCode.Value, -1));
-            }
-        }
-
-        partial void SetLoadingStateChange(LoadingStateChangedEventArgs args);
 
         /// <summary>
         /// Sets the handler references to null.
@@ -875,19 +810,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             AddressChanged?.Invoke(this, args);
 
             _outofProcessHostRpc.NotifyAddressChanged(_id, args.Address);
-        }
-
-        /// <summary>
-        /// Sets the loading state change.
-        /// </summary>
-        /// <param name="args">The <see cref="LoadingStateChangedEventArgs"/> instance containing the event data.</param>
-        partial void SetLoadingStateChange(LoadingStateChangedEventArgs args)
-        {
-            CanGoBack = args.CanGoBack;
-            CanGoForward = args.CanGoForward;
-            IsLoading = args.IsLoading;
-
-            _outofProcessHostRpc.NotifyLoadingStateChange(_id, args.CanGoBack, args.CanGoForward, args.IsLoading);
         }
 
         /// <summary>
