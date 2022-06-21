@@ -11,8 +11,6 @@ namespace CefSharp.OutOfProcess.WinForms
     public class ChromiumWebBrowser : Control, IChromiumWebBrowserInternal
     {
         private IntPtr _browserHwnd = IntPtr.Zero;
-        private int _remoteThreadId = -1;
-        private int _uiThreadId = -1;
         private OutOfProcessHost _host;
         private readonly string _initialAddress;
         private int _id;
@@ -58,6 +56,8 @@ namespace CefSharp.OutOfProcess.WinForms
         public event EventHandler<ConsoleEventArgs> ConsoleMessage;
         /// <inheritdoc/>
         public event EventHandler<LifecycleEventArgs> LifecycleEvent;
+        /// <inheritdoc/>
+        public event EventHandler DevToolsContextAvailable;
 
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
@@ -133,11 +133,6 @@ namespace CefSharp.OutOfProcess.WinForms
 
             if(disposing)
             {
-                if (_remoteThreadId > 0 && _uiThreadId > 0)
-                {
-                    //User32.AttachThreadInput(_remoteThreadId, _uiThreadId, false);
-                }
-
                 _devToolsContext.DOMContentLoaded -= DOMContentLoaded;
                 _devToolsContext.Error -= BrowserProcessCrashed;
                 _devToolsContext.FrameAttached -= FrameAttached;
@@ -167,9 +162,6 @@ namespace CefSharp.OutOfProcess.WinForms
                 NetworkRequestServedFromCache = null;
                 NetworkResponse = null;
                 ConsoleMessage = null;
-
-                _remoteThreadId = -1;
-                _uiThreadId = -1;
 
                 _browserHwnd = IntPtr.Zero;
 
@@ -257,8 +249,6 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         void IChromiumWebBrowserInternal.OnDevToolsReady()
         {
-            _devToolsReady = true;
-
             var ctx = (DevToolsContext)_devToolsContext;
 
             ctx.DOMContentLoaded += DOMContentLoaded;
@@ -275,9 +265,13 @@ namespace CefSharp.OutOfProcess.WinForms
             ctx.RequestServedFromCache += NetworkRequestServedFromCache;
             ctx.Response += NetworkResponse;
             ctx.Console += ConsoleMessage;
+            ctx.LifecycleEvent += LifecycleEvent;
 
             _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
                 {
+                    _devToolsReady = true;
+
+                    DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
 
                     //NOW the user can start using the devtools context
                 }, TaskScheduler.Current);

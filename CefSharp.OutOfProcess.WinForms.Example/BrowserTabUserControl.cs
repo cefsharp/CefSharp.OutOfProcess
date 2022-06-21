@@ -39,7 +39,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             outputLabel.Text = version;
         }
 
-        private  async void OnBrowserNetworkRequestFailed(object sender, Puppeteer.RequestEventArgs args)
+        private async void OnBrowserNetworkRequestFailed(object sender, Puppeteer.RequestEventArgs args)
         {
             var request = args.Request;
 
@@ -68,7 +68,6 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 
         private void OnBrowserConsoleMessage(object sender, Puppeteer.ConsoleEventArgs args)
         {
-            
             DisplayOutput(string.Format("Line: {0}, Source: {1}, Message: {2}", args.Message.Location.LineNumber, args.Message.Location.URL, args.Message.Text));
         }
 

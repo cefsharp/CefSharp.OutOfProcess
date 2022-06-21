@@ -103,6 +103,11 @@ namespace CefSharp.OutOfProcess
         event EventHandler<LifecycleEventArgs> LifecycleEvent;
 
         /// <summary>
+        /// Fired when the <see cref="DevToolsContext"/> is available
+        /// </summary>
+        event EventHandler DevToolsContextAvailable;
+
+        /// <summary>
         /// Raised when a <see cref="NetworkResponse"/> is received.
         /// </summary>
         /// <example>
@@ -126,6 +131,11 @@ namespace CefSharp.OutOfProcess
         /// </code>
         /// </example>
         event EventHandler<ResponseCreatedEventArgs> NetworkResponse;
+
+        /// <summary>
+        /// DevTools Context
+        /// </summary>
+        IDevToolsContext DevToolsContext { get; }
 
         /// <summary>
         /// Loads the specified <paramref name="url"/> in the Main Frame.

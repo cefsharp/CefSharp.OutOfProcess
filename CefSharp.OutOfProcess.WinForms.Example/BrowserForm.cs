@@ -4,7 +4,9 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -236,23 +238,25 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             }
         }
 
-        private void SelectAllMenuItemClick(object sender, EventArgs e)
+        private async void SelectAllMenuItemClick(object sender, EventArgs e)
         {
             var control = GetCurrentTabControl();
             if (control != null)
             {
-                throw new NotImplementedException();
-                //control.Browser.SelectAll();
+                var devtoolsContext = control.Browser.DevToolsContext;
+
+                _ = await devtoolsContext.EvaluateExpressionAsync("document.execCommand('selectAll');");
             }
         }
 
-        private void PrintToolStripMenuItemClick(object sender, EventArgs e)
+        private async void PrintToolStripMenuItemClick(object sender, EventArgs e)
         {
             var control = GetCurrentTabControl();
             if (control != null)
             {
-                throw new NotImplementedException();
-                //control.Browser.Print();
+                var devtoolsContext = control.Browser.DevToolsContext;
+
+                _ = await devtoolsContext.EvaluateExpressionAsync("window.print()");
             }
         }
 
@@ -287,71 +291,42 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             }
         }
 
-        private void ZoomInToolStripMenuItemClick(object sender, EventArgs e)
+        private async void ZoomInToolStripMenuItemClick(object sender, EventArgs e)
         {
             var control = GetCurrentTabControl();
             if (control != null)
             {
-                throw new NotImplementedException();
+                var devtoolsContext = control.Browser.DevToolsContext;
 
-                //var task = control.Browser.GetZoomLevelAsync();
+                var currentZoomLevel = await devtoolsContext.EvaluateExpressionAsync<double>("window.devicePixelRatio");
 
-                //task.ContinueWith(previous =>
-                //{
-                //    if (previous.Status == TaskStatus.RanToCompletion)
-                //    {
-                //        var currentLevel = previous.Result;
-                //        control.Browser.SetZoomLevel(currentLevel + ZoomIncrement);
-                //    }
-                //    else
-                //    {
-                //        throw new InvalidOperationException("Unexpected failure of calling CEF->GetZoomLevelAsync", previous.Exception);
-                //    }
-                //}, TaskContinuationOptions.ExecuteSynchronously);
+                await devtoolsContext.SetPageScaleFactorAsync(currentZoomLevel + 0.25);
             }
         }
 
-        private void ZoomOutToolStripMenuItemClick(object sender, EventArgs e)
+        private async void ZoomOutToolStripMenuItemClick(object sender, EventArgs e)
         {
             var control = GetCurrentTabControl();
             if (control != null)
             {
-                throw new NotImplementedException();
-                //var task = control.Browser.GetZoomLevelAsync();
-                //task.ContinueWith(previous =>
-                //{
-                //    if (previous.Status == TaskStatus.RanToCompletion)
-                //    {
-                //        var currentLevel = previous.Result;
-                //        control.Browser.SetZoomLevel(currentLevel - ZoomIncrement);
-                //    }
-                //    else
-                //    {
-                //        throw new InvalidOperationException("Unexpected failure of calling CEF->GetZoomLevelAsync", previous.Exception);
-                //    }
-                //}, TaskContinuationOptions.ExecuteSynchronously);
+                var devtoolsContext = control.Browser.DevToolsContext;
+
+                var currentZoomLevel = await devtoolsContext.EvaluateExpressionAsync<double>("window.devicePixelRatio");
+
+                await devtoolsContext.SetPageScaleFactorAsync(currentZoomLevel - 0.25);
             }
         }
 
-        private void CurrentZoomLevelToolStripMenuItemClick(object sender, EventArgs e)
+        private async void CurrentZoomLevelToolStripMenuItemClick(object sender, EventArgs e)
         {
             var control = GetCurrentTabControl();
             if (control != null)
             {
-                throw new NotImplementedException();
-                //var task = control.Browser.GetZoomLevelAsync();
-                //task.ContinueWith(previous =>
-                //{
-                //    if (previous.Status == TaskStatus.RanToCompletion)
-                //    {
-                //        var currentLevel = previous.Result;
-                //        MessageBox.Show("Current ZoomLevel: " + currentLevel.ToString());
-                //    }
-                //    else
-                //    {
-                //        MessageBox.Show("Unexpected failure of calling CEF->GetZoomLevelAsync: " + previous.Exception.ToString());
-                //    }
-                //}, TaskContinuationOptions.HideScheduler);
+                var devtoolsContext = control.Browser.DevToolsContext;
+
+                var currentZoomLevel = await devtoolsContext.EvaluateExpressionAsync<double>("window.devicePixelRatio");
+
+                MessageBox.Show("Current ZoomLevel: " + currentZoomLevel.ToString());
             }
         }
 
@@ -368,16 +343,18 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    throw new NotImplementedException();
+                    var devtoolsContext = control.Browser.DevToolsContext;
 
-                    //if (success)
-                    //{
-                    //    MessageBox.Show("Pdf was saved to " + dialog.FileName);
-                    //}
-                    //else
-                    //{
-                    //    MessageBox.Show("Unable to save Pdf, check you have write permissions to " + dialog.FileName);
-                    //}
+                    await devtoolsContext.PdfAsync(dialog.FileName);
+
+                    if (File.Exists(dialog.FileName))
+                    {
+                        MessageBox.Show("Pdf was saved to " + dialog.FileName);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Unable to save Pdf, check you have write permissions to " + dialog.FileName);
+                    }
 
                 }
 
@@ -412,30 +389,21 @@ namespace CefSharp.OutOfProcess.WinForms.Example
                 return;
             }
 
-            //var chromiumWebBrowser = (ChromiumWebBrowser)control.Browser;
+            var devtoolsContext = control.Browser.DevToolsContext;
 
-            //var contentSize = await chromiumWebBrowser.GetContentSizeAsync();
+            var screenshotPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CefSharp screenshot" + DateTime.Now.Ticks + ".png");
 
-            ////Capture current scrollable area
-            //var viewPort = new DevTools.Page.Viewport
-            //{
-            //    Width = contentSize.Width,
-            //    Height = contentSize.Height,
-            //};
+            await devtoolsContext.ScreenshotAsync(screenshotPath);
 
-            //var data = await chromiumWebBrowser.CaptureScreenshotAsync(viewPort: viewPort, captureBeyondViewport: true);
-
-            //// Make a file to save it to (e.g. C:\Users\[user]\Desktop\CefSharp screenshot.png)
-            //var screenshotPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "CefSharp screenshot" + DateTime.Now.Ticks + ".png");
-
-            //File.WriteAllBytes(screenshotPath, data);
-
-            //// Tell Windows to launch the saved image.
-            //Process.Start(new ProcessStartInfo(screenshotPath)
-            //{
-            //    // UseShellExecute is false by default on .NET Core.
-            //    UseShellExecute = true
-            //});
+            if (File.Exists(screenshotPath))
+            {
+                // Tell Windows to launch the saved image.
+                Process.Start(new ProcessStartInfo(screenshotPath)
+                {
+                    // UseShellExecute is false by default on .NET Core.
+                    UseShellExecute = true
+                });
+            }
         }
     }
 }

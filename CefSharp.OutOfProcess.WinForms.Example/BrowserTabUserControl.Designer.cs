@@ -81,7 +81,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             // 
             this.findCloseButton.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.findCloseButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.findCloseButton.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
+            this.findCloseButton.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.findCloseButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.findCloseButton.Name = "findCloseButton";
             this.findCloseButton.Size = new System.Drawing.Size(23, 22);
@@ -92,18 +92,18 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             // 
             this.statusLabel.AutoSize = true;
             this.statusLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.statusLabel.Location = new System.Drawing.Point(0, 464);
+            this.statusLabel.Location = new System.Drawing.Point(0, 460);
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(0, 13);
+            this.statusLabel.Size = new System.Drawing.Size(0, 15);
             this.statusLabel.TabIndex = 1;
             // 
             // outputLabel
             // 
             this.outputLabel.AutoSize = true;
             this.outputLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.outputLabel.Location = new System.Drawing.Point(0, 477);
+            this.outputLabel.Location = new System.Drawing.Point(0, 475);
             this.outputLabel.Name = "outputLabel";
-            this.outputLabel.Size = new System.Drawing.Size(0, 13);
+            this.outputLabel.Size = new System.Drawing.Size(0, 15);
             this.outputLabel.TabIndex = 0;
             // 
             // toolStrip1
@@ -168,7 +168,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             // 
             this.browserSplitContainer.Panel1.Controls.Add(this.browserPanel);
             this.browserSplitContainer.Panel2Collapsed = true;
-            this.browserSplitContainer.Size = new System.Drawing.Size(730, 439);
+            this.browserSplitContainer.Size = new System.Drawing.Size(730, 435);
             this.browserSplitContainer.SplitterDistance = 481;
             this.browserSplitContainer.TabIndex = 2;
             // 
@@ -177,7 +177,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             this.browserPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.browserPanel.Location = new System.Drawing.Point(0, 0);
             this.browserPanel.Name = "browserPanel";
-            this.browserPanel.Size = new System.Drawing.Size(730, 439);
+            this.browserPanel.Size = new System.Drawing.Size(730, 435);
             this.browserPanel.TabIndex = 3;
             // 
             // BrowserTabUserControl

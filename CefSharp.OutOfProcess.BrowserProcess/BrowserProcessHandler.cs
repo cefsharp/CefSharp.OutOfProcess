@@ -43,6 +43,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 });
             });
 
+            _jsonRpc.AddLocalRpcMethod("SendDevToolsMessage", (Action<int, string>)delegate (int browserId, string message)
+            {
+                _ = CefThread.ExecuteOnUiThread(() =>
+                {
+                    var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+                    browser?.GetBrowserHost().SendDevToolsMessage(message);
+
+                    return true;
+                });
+            });
+
             _jsonRpc.AddLocalRpcMethod("CloseHost", (Action)delegate ()
             {
                 _ = CefThread.ExecuteOnUiThread(() =>
