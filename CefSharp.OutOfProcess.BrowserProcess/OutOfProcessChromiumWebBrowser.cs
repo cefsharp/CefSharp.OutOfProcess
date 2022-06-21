@@ -3,10 +3,9 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
-using StreamJsonRpc;
-using System.Collections.Generic;
 using CefSharp.Callback;
 using System.IO;
+using CefSharp.OutOfProcess.Interface;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -36,7 +35,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// JSON RPC used for IPC with host
         /// </summary>
-        private JsonRpc _jsonRpc;
+        private IOutOfProcessServer outOfProcessServer;
 
         /// <summary>
         /// Flag to guard the creation of the underlying browser - only one instance can be created
@@ -305,7 +304,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             StatusMessage?.Invoke(this, args);
 
-            _ = _jsonRpc.NotifyAsync("StatusMessage", _id, args.Value);
+            outOfProcessServer.NotifyStatusMessage(_id, args.Value);
         }
 
         /// <summary>
@@ -352,20 +351,19 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             Interlocked.Exchange(ref browserInitialized, 1);
 
             var host = browser.GetHost();
-
-            _ = _jsonRpc.NotifyAsync("OnAfterBrowserCreated", _id, browser.GetHost().GetWindowHandle().ToInt32());
+            outOfProcessServer.NotifyBrowserCreated(_id, browser.GetHost().GetWindowHandle());
 
             var observer = new CefSharpDevMessageObserver();
             observer.OnDevToolsAgentDetached((b) =>
             {
-                _ = _jsonRpc.NotifyAsync("OnDevToolsAgentDetached", _id);
+                outOfProcessServer.NotifyDevToolsAgentDetached(_id);
             });
             observer.OnDevToolsMessage((b, m) =>
             {
                 using var reader = new StreamReader(m);
                 var msg = reader.ReadToEnd();
 
-                _ = _jsonRpc.NotifyAsync("OnDevToolsMessage", _id, msg);
+                outOfProcessServer.NotifyDevToolsMessage(_id, msg);
             });
 
             _devtoolsMessageObserver = observer;
@@ -386,7 +384,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 ((IDisposable)devToolsClient).Dispose();
 
-                _ = _jsonRpc.NotifyAsync("OnDevToolsReady", _id);
+                outOfProcessServer.NotifyDevToolsReady(_id);
 
             }, TaskScheduler.Default);            
         }
@@ -672,12 +670,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// you have a chance to subscribe to the event as the CEF Browser is created async. (Issue https://github.com/cefsharp/CefSharp/issues/3552).
         /// </param>
         /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
-        public OutOfProcessChromiumWebBrowser(JsonRpc jsonRpc, int id, string address = "",
+        public OutOfProcessChromiumWebBrowser(IOutOfProcessServer outOfProcessServer, int id, string address = "",
             IRequestContext requestContext = null)
         {
             _id = id;
             RequestContext = requestContext;
-            _jsonRpc = jsonRpc;
+            this.outOfProcessServer = outOfProcessServer;
 
             Cef.AddDisposable(this);
             Address = address;
@@ -876,7 +874,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             AddressChanged?.Invoke(this, args);
 
-            _ = _jsonRpc.NotifyAsync("AddressChanged", _id, args.Address);
+            outOfProcessServer.NotifyAddressChanged(_id, args.Address);
         }
 
         /// <summary>
@@ -889,7 +887,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             CanGoForward = args.CanGoForward;
             IsLoading = args.IsLoading;
 
-            _ = _jsonRpc.NotifyAsync("LoadingStateChange", _id, args.CanGoBack, args.CanGoForward, args.IsLoading);
+            outOfProcessServer.NotifyLoadingStateChange(_id, args.CanGoBack, args.CanGoForward, args.IsLoading);
         }
 
         /// <summary>
@@ -900,7 +898,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             TitleChanged?.Invoke(this, args);
 
-            _ = _jsonRpc.NotifyAsync("TitleChanged", _id, args.Title);
+            outOfProcessServer.NotifyTitleChanged(_id, args.Title);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using CefSharp.OutOfProcess.Internal;
+﻿using CefSharp.OutOfProcess.Interface;
+using CefSharp.OutOfProcess.Internal;
 using PInvoke;
 using StreamJsonRpc;
 using System;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess
 {
-    public class OutOfProcessHost : IDisposable
+    public class OutOfProcessHost : IOutOfProcessServer, IDisposable
     {
         /// <summary>
         /// The CefSharp.OutOfProcess.BrowserProcess.exe name
@@ -18,6 +19,7 @@ namespace CefSharp.OutOfProcess
 
         private Process _browserProcess;
         private JsonRpc _jsonRpc;
+        private IBrowserProcessServer _browserProcessServer;
         private string _cefSharpVersion;
         private string _cefVersion;
         private string _chromiumVersion;
@@ -25,8 +27,8 @@ namespace CefSharp.OutOfProcess
         private int _remoteuiThreadId;
         private int _browserIdentifier = 1;
         private string _outofProcessFilePath;
-        private ConcurrentDictionary<int, IChromiumWebBrowserInternal> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowserInternal>();
 
+        private ConcurrentDictionary<int, IChromiumWebBrowserInternal> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowserInternal>();
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private OutOfProcessHost(string path)
@@ -86,14 +88,14 @@ namespace CefSharp.OutOfProcess
         public bool CreateBrowser(IChromiumWebBrowserInternal browser, IntPtr handle, string url, out int id)
         {
             id = _browserIdentifier++;
-            _ = _jsonRpc.NotifyAsync("CreateBrowser", handle.ToInt32(), url, id);
+            _ = _browserProcessServer.CreateBrowser(handle, url, id);
 
             return _browsers.TryAdd(id, browser);
         }
 
         internal Task SendDevToolsMessageAsync(int browserId, string message)
         {
-            return _jsonRpc.NotifyAsync("SendDevToolsMessage", browserId, message);            
+            return _browserProcessServer.SendDevToolsMessage(browserId, message);
         }
 
         private Task<OutOfProcessHost> InitializedTask
@@ -113,100 +115,98 @@ namespace CefSharp.OutOfProcess
                 RedirectStandardOutput = true,
             });
 
-            _uiThreadId = Kernel32.GetCurrentThreadId();
-
             _jsonRpc = JsonRpc.Attach(_browserProcess.StandardInput.BaseStream, _browserProcess.StandardOutput.BaseStream);
+
+            _browserProcessServer = _jsonRpc.Attach<IBrowserProcessServer>();
             _jsonRpc.AllowModificationWhileListening = true;
-
-            _jsonRpc.AddLocalRpcMethod("OnAfterBrowserCreated", (Action<int, int>)delegate (int id, int ptr)
-            {
-                if (_browsers.TryGetValue(id, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.SetBrowserHwnd(new IntPtr(ptr));
-                }
-
-                //var attached = User32.AttachThreadInput(_remoteThreadId, _uiThreadId, true);
-            });
-
-            _jsonRpc.AddLocalRpcMethod("OnContextInitialized", (Action<int, string, string, string>) delegate (int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion)
-            {
-                _remoteuiThreadId = threadId;
-                _cefSharpVersion = cefSharpVersion;
-                _cefVersion = cefVersion;
-                _chromiumVersion = chromiumVersion;
-
-                _processInitialized.TrySetResult(this);
-
-                //var attached = User32.AttachThreadInput(_remoteThreadId, _uiThreadId, true);
-            });
-
-            _jsonRpc.AddLocalRpcMethod("OnDevToolsMessage", (Action<int, string>)delegate (int browserId, string jsonMsg)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.OnDevToolsMessage(jsonMsg);
-                }
-            });
-
-            _jsonRpc.AddLocalRpcMethod("OnDevToolsAgentDetached", (Action<int>)delegate (int browserId)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    
-                }
-            });
-
-            _jsonRpc.AddLocalRpcMethod("OnDevToolsReady", (Action<int>)delegate (int browserId)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.OnDevToolsReady();
-                }
-            });
-
-            _jsonRpc.AddLocalRpcMethod("LoadingStateChange", (Action<int, bool, bool, bool>)delegate (int browserId, bool canGoBack, bool canGoFordware, bool isLoading)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.SetLoadingStateChange(canGoBack, canGoFordware, isLoading);
-                }
-            });
-
-            _jsonRpc.AddLocalRpcMethod("TitleChanged", (Action<int, string>)delegate (int browserId, string title)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.SetTitle(title);
-                }
-            });
-
-            _jsonRpc.AddLocalRpcMethod("StatusMessage", (Action<int, string>)delegate (int browserId, string msg)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.SetStatusMessage(msg);
-                }
-            });            
-
-            _jsonRpc.AddLocalRpcMethod("AddressChanged", (Action<int, string>)delegate (int browserId, string title)
-            {
-                if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-                {
-                    chromiumWebBrowser.SetAddress(title);
-                }
-            });
-
+            _jsonRpc.AddLocalRpcTarget<IOutOfProcessServer>(this, null);
             _jsonRpc.AllowModificationWhileListening = false;
+
+            _uiThreadId = Kernel32.GetCurrentThreadId();
+        }
+
+        void IOutOfProcessServer.NotifyAddressChanged(int browserId, string address)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetAddress(address);
+            }
+        }
+
+        void IOutOfProcessServer.NotifyBrowserCreated(int browserId, IntPtr browserHwnd)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetBrowserHwnd(browserHwnd);
+            }
+        }
+
+        void IOutOfProcessServer.NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion)
+        {
+            _remoteuiThreadId = threadId;
+            _cefSharpVersion = cefSharpVersion;
+            _cefVersion = cefVersion;
+            _chromiumVersion = chromiumVersion;
+
+            _processInitialized.TrySetResult(this);
+        }
+
+        void IOutOfProcessServer.NotifyDevToolsAgentDetached(int browserId)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+
+            }
+        }
+
+        void IOutOfProcessServer.NotifyDevToolsMessage(int browserId, string devToolsMessage)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.OnDevToolsMessage(devToolsMessage);
+            }
+        }
+
+        void IOutOfProcessServer.NotifyDevToolsReady(int browserId)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.OnDevToolsReady();
+            }
+        }
+
+        void IOutOfProcessServer.NotifyLoadingStateChange(int browserId, bool canGoBack, bool canGoForward, bool isLoading)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetLoadingStateChange(canGoBack, canGoForward, isLoading);
+            }
+        }
+
+        void IOutOfProcessServer.NotifyStatusMessage(int browserId, string statusMessage)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetStatusMessage(statusMessage);
+            }
+        }
+
+        void IOutOfProcessServer.NotifyTitleChanged(int browserId, string title)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetTitle(title);
+            }
         }
 
         public void CloseBrowser(int id)
         {
-            _ = _jsonRpc?.NotifyAsync("CloseBrowser", id);
+            _browserProcessServer.CloseBrowser(id);
         }
 
         public void Dispose()
         {
-            _ = _jsonRpc?.NotifyAsync("CloseHost");
+            _browserProcessServer.CloseHost();
             _jsonRpc?.Dispose();
             _jsonRpc = null;
         }
