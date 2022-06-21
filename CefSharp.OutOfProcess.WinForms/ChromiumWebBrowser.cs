@@ -72,7 +72,7 @@ namespace CefSharp.OutOfProcess.WinForms
         }
 
         /// <inheritdoc/>
-        void IChromiumWebBrowserInternal.SetBrowserHwnd(IntPtr hwnd)
+        void IChromiumWebBrowserInternal.OnAfterBrowserCreated(IntPtr hwnd)
         {
             _browserHwnd = hwnd;
         }
@@ -301,22 +301,26 @@ namespace CefSharp.OutOfProcess.WinForms
             return _devToolsContext.GoForwardAsync(options);
         }
 
-        public void SetTitle(string title)
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.SetTitle(string title)
         {
             TitleChanged?.Invoke(this, new TitleChangedEventArgs(title));
         }
 
-        public void SetAddress(string address)
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.SetAddress(string address)
         {
             AddressChanged?.Invoke(this, new AddressChangedEventArgs(address));
         }
 
-        public void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading)
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading)
         {
             LoadingStateChanged?.Invoke(this, new LoadingStateChangedEventArgs(canGoBack, canGoForward, isLoading));
         }
 
-        public void SetStatusMessage(string msg)
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.SetStatusMessage(string msg)
         {
             StatusMessage?.Invoke(this, new StatusMessageEventArgs(msg));
         }

@@ -20,7 +20,7 @@ namespace CefSharp.OutOfProcess.Interface
         /// </summary>
         /// <param name="browserId">browser Id</param>
         /// <param name="message"devtools message (json)></param>
-        /// <returns></returns>
+        /// <returns>Task</returns>
         Task SendDevToolsMessage(int browserId, string message);
 
         /// <summary>
@@ -34,8 +34,22 @@ namespace CefSharp.OutOfProcess.Interface
         /// </summary>
         /// <param name="parentHwnd">parent Hwnd</param>
         /// <param name="url">start url</param>
-        /// <param name="id">browser id</param>
+        /// <param name="browserId">browser id</param>
         /// <returns>Task</returns>
-        Task CreateBrowser(IntPtr parentHwnd, string url, int id);
+        Task CreateBrowser(IntPtr parentHwnd, string url, int browserId);
+
+        /// <summary>
+        /// Notify the browser that the window hosting it is about to be moved or resized.
+        /// This will dismiss any existing popups (dropdowns).
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        void NotifyMoveOrResizeStarted(int browserId);
+
+        /// <summary>
+        /// Set whether the browser is focused.
+        /// </summary>
+        /// <param name="id">browser id</param>
+        /// <param name="focus">set focus</param>
+        void SetFocus(int browserId, bool focus);
     }
 }

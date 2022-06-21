@@ -99,12 +99,30 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 windowInfo.WindowName = "CefSharpBrowserProcess";
                 windowInfo.SetAsChild(parentHwnd);
 
+                //Disable Window activation by default
+                //https://bitbucket.org/chromiumembedded/cef/issues/1856/branch-2526-cef-activates-browser-window
+                windowInfo.ExStyle |= OutOfProcessChromiumWebBrowser.WS_EX_NOACTIVATE;
+
                 browser.CreateBrowser(windowInfo);
 
                 _browsers.Add(browser);
 
                 return true;
             });
+        }
+
+        void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
+        }
+
+        void IOutOfProcessClientRpc.SetFocus(int browserId, bool focus)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            browser?.GetBrowserHost().SetFocus(focus);
         }
     }
 }

@@ -43,7 +43,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
         {
             var request = args.Request;
 
-            var errorHtml = string.Format("<html><body><h2>Failed to load URL {0} with error {1} ({2}).</h2></body></html>",
+            var errorHtml = string.Format("<html><body><h2>Failed to load URL {0} with error {1}.</h2></body></html>",
                                               request.Url, request.Failure);
 
             await Browser.MainFrame.SetContentAsync(errorHtml);

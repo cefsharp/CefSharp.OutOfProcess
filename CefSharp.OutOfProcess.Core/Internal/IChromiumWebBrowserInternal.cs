@@ -13,7 +13,7 @@ namespace CefSharp.OutOfProcess.Internal
         /// Set the browser Hwnd
         /// </summary>
         /// <param name="hwnd">Hwnd</param>
-        void SetBrowserHwnd(IntPtr hwnd);
+        void OnAfterBrowserCreated(IntPtr hwnd);
 
         /// <summary>
         /// Called when a DevTools message arrives from the browser process

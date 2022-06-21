@@ -6,6 +6,9 @@ using System.ComponentModel;
 using CefSharp.Callback;
 using System.IO;
 using CefSharp.OutOfProcess.Interface;
+using System.Runtime.InteropServices;
+using PInvoke;
+using System.Diagnostics;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -19,8 +22,16 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             "The undelying CefBrowser instance is not yet initialized. Use the IsBrowserInitializedChanged event and check " +
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
 
+        public const uint WS_EX_NOACTIVATE = 0x08000000;
+
         private IDevToolsMessageObserver _devtoolsMessageObserver;
         private IRegistration _devtoolsRegistration;
+
+        /// <summary>
+        /// If true the the WS_EX_NOACTIVATE style will be removed so that future mouse clicks
+        /// inside the browser correctly activate and focus the window.
+        /// </summary>
+        private bool _removeExNoActivateStyle;
 
         /// <summary>
         /// Internal ID used for tracking browsers between Processes;
@@ -382,6 +393,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <param name="args">The <see cref="LoadingStateChangedEventArgs"/> instance containing the event data.</param>
         void IWebBrowserInternal.SetLoadingStateChange(LoadingStateChangedEventArgs args)
         {
+            if (_removeExNoActivateStyle && InternalIsBrowserInitialized())
+            {
+                _removeExNoActivateStyle = false;
+
+                var hwnd = BrowserCore.GetHost().GetWindowHandle();
+
+                // Remove the WS_EX_NOACTIVATE style so that future mouse clicks inside the
+                // browser correctly activate and focus the browser. 
+                //https://github.com/chromiumembedded/cef/blob/9df4a54308a88fd80c5774d91c62da35afb5fd1b/tests/cefclient/browser/root_window_win.cc#L1088
+                RemoveExNoActivateStyle(hwnd);
+            }
+
             CanGoBack = args.CanGoBack;
             CanGoForward = args.CanGoForward;
             IsLoading = args.IsLoading;
@@ -389,6 +412,42 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             _outofProcessHostRpc.NotifyLoadingStateChange(_id, args.CanGoBack, args.CanGoForward, args.IsLoading);
 
             LoadingStateChanged?.Invoke(this, args);
+        }
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int index);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+        private static extern int SetWindowLong32(HandleRef hWnd, int index, int dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        private static extern IntPtr SetWindowLongPtr64(HandleRef hWnd, int index, IntPtr dwNewLong);
+
+        private const int GWL_EXSTYLE = -20;
+
+        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra
+        //SetWindowLongPtr for x64, SetWindowLong for x86
+        private void RemoveExNoActivateStyle(IntPtr hwnd)
+        {
+            var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+
+            if (IntPtr.Size == 8)
+            {
+                if ((exStyle.ToInt64() & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE)
+                {
+                    exStyle = new IntPtr(exStyle.ToInt64() & ~WS_EX_NOACTIVATE);
+                    //Remove WS_EX_NOACTIVATE
+                    SetWindowLongPtr64(new HandleRef(this, hwnd), GWL_EXSTYLE, exStyle);
+                }
+            }
+            else
+            {
+                if ((exStyle.ToInt32() & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE)
+                {
+                    //Remove WS_EX_NOACTIVATE
+                    SetWindowLong32(new HandleRef(this, hwnd), GWL_EXSTYLE, (int)(exStyle.ToInt32() & ~WS_EX_NOACTIVATE));
+                }
+            }
         }
 
         /// <inheritdoc/>
@@ -699,6 +758,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <exception cref="System.Exception">An instance of the underlying browser has already been created, this method can only be called once.</exception>
         public void CreateBrowser(IWindowInfo windowInfo = null, IBrowserSettings browserSettings = null)
         {
+            //Debugger.Break();
+
             if (_browserCreated)
             {
                 throw new Exception("An instance of the underlying browser has already been created, this method can only be called once.");
@@ -711,11 +772,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 browserSettings = Core.ObjectFactory.CreateBrowserSettings(autoDispose: true);
             }
 
-            if (windowInfo == null)
-            {
-                windowInfo = Core.ObjectFactory.CreateWindowInfo();
-                windowInfo.SetAsWindowless(IntPtr.Zero);
-            }
+            //We actually check if WS_EX_NOACTIVATE was set for instances
+            //the user has override CreateBrowserWindowInfo and not called base.CreateBrowserWindowInfo
+            _removeExNoActivateStyle = (windowInfo.ExStyle & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE;
 
             //TODO: We need some sort of timeout and
             //if we use the same approach for WPF/WinForms then

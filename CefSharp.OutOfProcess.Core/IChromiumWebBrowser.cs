@@ -13,10 +13,6 @@ namespace CefSharp.OutOfProcess
         /// Occurs when the browser address changed.
         /// </summary>
         event EventHandler<AddressChangedEventArgs> AddressChanged;
-        /// <summary>
-        /// Occurs when document title changes.
-        /// </summary>
-        event EventHandler<TitleChangedEventArgs> TitleChanged;
 
         /// <summary>
         /// Event handler for changes to the status message.
