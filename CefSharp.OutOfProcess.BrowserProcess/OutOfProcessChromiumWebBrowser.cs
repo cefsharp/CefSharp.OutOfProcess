@@ -30,48 +30,48 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// The managed cef browser adapter
         /// </summary>
-        private IBrowserAdapter managedCefBrowserAdapter;
+        private IBrowserAdapter _managedCefBrowserAdapter;
 
         /// <summary>
         /// JSON RPC used for IPC with host
         /// </summary>
-        private IOutOfProcessHostRpc outOfProcessServer;
+        private IOutOfProcessHostRpc _outofProcessHostRpc;
 
         /// <summary>
         /// Flag to guard the creation of the underlying browser - only one instance can be created
         /// </summary>
-        private bool browserCreated;
+        private bool _browserCreated;
 
         /// <summary>
         /// Used as workaround for issue https://github.com/cefsharp/CefSharp/issues/3021
         /// </summary>
-        private long canExecuteJavascriptInMainFrameId;
+        private long _canExecuteJavascriptInMainFrameId;
 
         /// <summary>
         /// The browser initialized - boolean represented as 0 (false) and 1(true) as we use Interlocker to increment/reset
         /// </summary>
-        private int browserInitialized;
+        private int _browserInitialized;
 
         /// <summary>
         /// The value for disposal, if it's 1 (one) then this instance is either disposed
         /// or in the process of getting disposed
         /// </summary>
-        private int disposeSignaled;
+        private int _disposeSignaled;
 
         /// <summary>
         /// The browser
         /// </summary>
-        private IBrowser browser;
+        private IBrowser _browser;
 
         /// <summary>
         /// Initial browser load task complection source
         /// </summary>
-        private TaskCompletionSource<LoadUrlAsyncResponse> initialLoadTaskCompletionSource = new TaskCompletionSource<LoadUrlAsyncResponse>();
+        private TaskCompletionSource<LoadUrlAsyncResponse> _initialLoadTaskCompletionSource = new TaskCompletionSource<LoadUrlAsyncResponse>();
 
         /// <summary>
         /// Initial browser load action
         /// </summary>
-        private Action<bool?, CefErrorCode?> initialLoadAction;
+        private Action<bool?, CefErrorCode?> _initialLoadAction;
 
         /// <summary>
         /// Id
@@ -254,12 +254,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             //incorrectly overrides the value
             //https://github.com/cefsharp/CefSharp/issues/3021
 
-            if (frameId > canExecuteJavascriptInMainFrameId && !canExecute)
+            if (frameId > _canExecuteJavascriptInMainFrameId && !canExecute)
             {
                 return;
             }
 
-            canExecuteJavascriptInMainFrameId = frameId;
+            _canExecuteJavascriptInMainFrameId = frameId;
             CanExecuteJavascriptInMainFrame = canExecute;
         }
 
@@ -304,7 +304,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             StatusMessage?.Invoke(this, args);
 
-            outOfProcessServer.NotifyStatusMessage(_id, args.Value);
+            _outofProcessHostRpc.NotifyStatusMessage(_id, args.Value);
         }
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             LoadError?.Invoke(this, args);
 
-            initialLoadAction?.Invoke(null, args.ErrorCode);
+            _initialLoadAction?.Invoke(null, args.ErrorCode);
         }
 
         /// <summary>
@@ -335,7 +335,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <value>The browser adapter.</value>
         IBrowserAdapter IWebBrowserInternal.BrowserAdapter
         {
-            get { return managedCefBrowserAdapter; }
+            get { return _managedCefBrowserAdapter; }
         }
 
         void IWebBrowserInternal.OnAfterBrowserCreated(IBrowser browser)
@@ -345,25 +345,25 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 return;
             }
 
-            this.browser = browser;
+            this._browser = browser;
             BrowserCore = browser;
-            initialLoadAction = InitialLoad;
-            Interlocked.Exchange(ref browserInitialized, 1);
+            _initialLoadAction = InitialLoad;
+            Interlocked.Exchange(ref _browserInitialized, 1);
 
             var host = browser.GetHost();
-            outOfProcessServer.NotifyBrowserCreated(_id, browser.GetHost().GetWindowHandle());
+            _outofProcessHostRpc.NotifyBrowserCreated(_id, browser.GetHost().GetWindowHandle());
 
             var observer = new CefSharpDevMessageObserver();
             observer.OnDevToolsAgentDetached((b) =>
             {
-                outOfProcessServer.NotifyDevToolsAgentDetached(_id);
+                _outofProcessHostRpc.NotifyDevToolsAgentDetached(_id);
             });
             observer.OnDevToolsMessage((b, m) =>
             {
                 using var reader = new StreamReader(m);
                 var msg = reader.ReadToEnd();
 
-                outOfProcessServer.NotifyDevToolsMessage(_id, msg);
+                _outofProcessHostRpc.NotifyDevToolsMessage(_id, msg);
             });
 
             _devtoolsMessageObserver = observer;
@@ -384,7 +384,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 ((IDisposable)devToolsClient).Dispose();
 
-                outOfProcessServer.NotifyDevToolsReady(_id);
+                _outofProcessHostRpc.NotifyDevToolsReady(_id);
 
             }, TaskScheduler.Default);            
         }
@@ -399,7 +399,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             LoadingStateChanged?.Invoke(this, args);
 
-            initialLoadAction?.Invoke(args.IsLoading, null);
+            _initialLoadAction?.Invoke(args.IsLoading, null);
         }
 
         /// <inheritdoc/>
@@ -425,13 +425,13 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <inheritdoc/>
         public Task<LoadUrlAsyncResponse> WaitForInitialLoadAsync()
         {
-            return initialLoadTaskCompletionSource.Task;
+            return _initialLoadTaskCompletionSource.Task;
         }
 
         /// <inheritdoc/>
         public bool TryGetBrowserCoreById(int browserId, out IBrowser browser)
         {
-            var browserAdapter = managedCefBrowserAdapter;
+            var browserAdapter = _managedCefBrowserAdapter;
 
             if (IsDisposed || browserAdapter == null || browserAdapter.IsDisposed)
             {
@@ -451,7 +451,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfDisposed();
             ThrowExceptionIfBrowserNotInitialized();
 
-            using (var devToolsClient = browser.GetDevToolsClient())
+            using (var devToolsClient = _browser.GetDevToolsClient())
             {
                 //Get the content size
                 var layoutMetricsResponse = await devToolsClient.Page.GetLayoutMetricsAsync().ConfigureAwait(continueOnCapturedContext: false);
@@ -464,9 +464,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             if (IsDisposed)
             {
-                initialLoadAction = null;
+                _initialLoadAction = null;
 
-                initialLoadTaskCompletionSource.TrySetCanceled();
+                _initialLoadTaskCompletionSource.TrySetCanceled();
 
                 return;
             }
@@ -478,9 +478,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                     return;
                 }
 
-                initialLoadAction = null;
+                _initialLoadAction = null;
 
-                var host = browser?.GetHost();
+                var host = _browser?.GetHost();
 
                 var navEntry = host?.GetVisibleNavigationEntry();
 
@@ -493,7 +493,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                     statusCode = -1;
                 }
 
-                initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(CefErrorCode.None, statusCode));
+                _initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(CefErrorCode.None, statusCode));
             }
             else if (errorCode.HasValue)
             {
@@ -504,9 +504,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                     return;
                 }
 
-                initialLoadAction = null;
+                _initialLoadAction = null;
 
-                initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(errorCode.Value, -1));
+                _initialLoadTaskCompletionSource.TrySetResultAsync(new LoadUrlAsyncResponse(errorCode.Value, -1));
             }
         }
 
@@ -544,7 +544,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             // Use CompareExchange to read the current value - if disposeCount is 1, we set it to 1, effectively a no-op
             // Volatile.Read would likely use a memory barrier which I believe is unnecessary in this scenario
-            return Interlocked.CompareExchange(ref browserInitialized, 0, 0) == 1;
+            return Interlocked.CompareExchange(ref _browserInitialized, 0, 0) == 1;
         }
 
         /// <summary>
@@ -579,7 +579,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             get
             {
-                return Interlocked.CompareExchange(ref disposeSignaled, 1, 1) == 1;
+                return Interlocked.CompareExchange(ref _disposeSignaled, 1, 1) == 1;
             }
         }
 
@@ -675,12 +675,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             _id = id;
             RequestContext = requestContext;
-            this.outOfProcessServer = outOfProcessServer;
+            this._outofProcessHostRpc = outOfProcessServer;
 
             Cef.AddDisposable(this);
             Address = address;
 
-            managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, false);
+            _managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, false);
         }
 
         /// <summary>
@@ -708,7 +708,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             // Attempt to move the disposeSignaled state from 0 to 1. If successful, we can be assured that
             // this thread is the first thread to do so, and can safely dispose of the object.
-            if (Interlocked.CompareExchange(ref disposeSignaled, 1, 0) != 0)
+            if (Interlocked.CompareExchange(ref _disposeSignaled, 1, 0) != 0)
             {
                 return;
             }
@@ -721,7 +721,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 _devtoolsMessageObserver = null;
 
                 CanExecuteJavascriptInMainFrame = false;
-                Interlocked.Exchange(ref browserInitialized, 0);
+                Interlocked.Exchange(ref _browserInitialized, 0);
 
                 // Don't reference event listeners any longer:
                 AddressChanged = null;
@@ -742,11 +742,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 FocusHandler = new NoFocusHandler();
 
-                browser = null;
+                _browser = null;
                 BrowserCore = null;
 
-                managedCefBrowserAdapter?.Dispose();
-                managedCefBrowserAdapter = null;
+                _managedCefBrowserAdapter?.Dispose();
+                _managedCefBrowserAdapter = null;
 
                 // LifeSpanHandler is set to null after managedCefBrowserAdapter.Dispose so ILifeSpanHandler.DoClose
                 // is called.
@@ -764,12 +764,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <exception cref="System.Exception">An instance of the underlying browser has already been created, this method can only be called once.</exception>
         public void CreateBrowser(IWindowInfo windowInfo = null, IBrowserSettings browserSettings = null)
         {
-            if (browserCreated)
+            if (_browserCreated)
             {
                 throw new Exception("An instance of the underlying browser has already been created, this method can only be called once.");
             }
 
-            browserCreated = true;
+            _browserCreated = true;
 
             if (browserSettings == null)
             {
@@ -792,7 +792,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                     return;
                 }
 
-                managedCefBrowserAdapter.CreateBrowser(windowInfo, browserSettings, RequestContext, Address);
+                _managedCefBrowserAdapter.CreateBrowser(windowInfo, browserSettings, RequestContext, Address);
 
                 //Dispose of BrowserSettings if we created it, if user created then they're responsible
                 if (browserSettings.AutoDispose)
@@ -834,7 +834,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         public IJavascriptObjectRepository JavascriptObjectRepository
         {
-            get { return managedCefBrowserAdapter?.JavascriptObjectRepository; }
+            get { return _managedCefBrowserAdapter?.JavascriptObjectRepository; }
         }
 
         /// <summary>
@@ -861,7 +861,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfDisposed();
             ThrowExceptionIfBrowserNotInitialized();
 
-            return browser;
+            return _browser;
         }
 
         /// <summary>
@@ -874,7 +874,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             AddressChanged?.Invoke(this, args);
 
-            outOfProcessServer.NotifyAddressChanged(_id, args.Address);
+            _outofProcessHostRpc.NotifyAddressChanged(_id, args.Address);
         }
 
         /// <summary>
@@ -887,7 +887,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             CanGoForward = args.CanGoForward;
             IsLoading = args.IsLoading;
 
-            outOfProcessServer.NotifyLoadingStateChange(_id, args.CanGoBack, args.CanGoForward, args.IsLoading);
+            _outofProcessHostRpc.NotifyLoadingStateChange(_id, args.CanGoBack, args.CanGoForward, args.IsLoading);
         }
 
         /// <summary>
@@ -898,7 +898,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             TitleChanged?.Invoke(this, args);
 
-            outOfProcessServer.NotifyTitleChanged(_id, args.Title);
+            _outofProcessHostRpc.NotifyTitleChanged(_id, args.Title);
         }
 
         /// <summary>
