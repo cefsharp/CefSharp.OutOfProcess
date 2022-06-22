@@ -28,12 +28,10 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
     /// and https://stackoverflow.com/questions/6500336/custom-dwm-drawn-window-frame-flickers-on-resizing-if-the-window-contains-a-hwnd/17471534#17471534
     public class ChromiumWebBrowser : System.Windows.Interop.HwndHost, IChromiumWebBrowserInternal
     {
-        public const string BrowserNotInitializedExceptionErrorMessage =
+        private const string BrowserNotInitializedExceptionErrorMessage =
             "The ChromiumWebBrowser instance creates the underlying Chromium Embedded Framework (CEF) browser instance in an async fashion. " +
             "The undelying CefBrowser instance is not yet initialized. Use the IsBrowserInitializedChanged event and check " +
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
-
-        private static string _defaultHostProcessPath;
 
         private const int WS_CHILD = 0x40000000,
             WS_VISIBLE = 0x10000000,
@@ -278,18 +276,15 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// <summary>
         /// Initializes a new instance of the <see cref="ChromiumWebBrowser"/> instance.
         /// </summary>
-        public ChromiumWebBrowser() : this(null, null)
-        {
-            
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ChromiumWebBrowser"/> instance.
-        /// </summary>
         /// <param name="host">Out of process host</param>
         /// <param name="initialAddress">address to load initially</param>
-        public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
+        public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress = null)
         {
+            if(host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
             _host = host;
             _initialAddress = initialAddress;
 
@@ -321,15 +316,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             PresentationSource.AddSourceChangedHandler(this, PresentationSourceChangedHandler);
 
             UseLayoutRounding = true;
-        }
-
-        /// <summary>
-        /// Used when control is created through xaml or using default constructor
-        /// </summary>
-        /// <param name="path"></param>
-        public static void SetHostProcessPath(string path)
-        {
-            _defaultHostProcessPath = path;
         }
 
         /// <inheritdoc/>
@@ -505,29 +491,12 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                             0);
             }
 
-            if (_host == null)
-            {
-                _ = OutOfProcessHost.CreateAsync(_defaultHostProcessPath).ContinueWith((t) =>
-                {
-                    _host = t.Result;
+            _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
 
-                    _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
+            _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
-                    _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
-
-                    var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
-                    _devToolsContext = Puppeteer.DevToolsContext.CreateForOutOfProcess(connection);
-                }, TaskScheduler.Default);
-            }
-            else
-            {
-                _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
-
-                _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
-
-                var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
-                _devToolsContext = Puppeteer.DevToolsContext.CreateForOutOfProcess(connection);
-            }
+            var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
+            _devToolsContext = Puppeteer.DevToolsContext.CreateForOutOfProcess(connection);
 
             return new HandleRef(null, _hwndHost);
         }

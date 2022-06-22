@@ -59,8 +59,18 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         public event EventHandler DevToolsContextAvailable;
 
+        /// <summary>
+        /// ChromiumWebBrowser constructor
+        /// </summary>
+        /// <param name="host">Out of process host</param>
+        /// <param name="initialAddress">address that will be initially loaded in the browser</param>
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
+            if(host == null)
+            {
+                throw new ArgumentNullException(nameof(host));
+            }
+
             _host = host;
             _initialAddress = initialAddress;
         }
