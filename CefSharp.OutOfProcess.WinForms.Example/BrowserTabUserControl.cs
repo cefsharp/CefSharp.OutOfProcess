@@ -43,6 +43,12 @@ namespace CefSharp.OutOfProcess.WinForms.Example
         {
             var request = args.Request;
 
+            // Generally safe to ignore showing user aborted errors
+            if(request.Failure == "net::ERR_ABORTED")
+            {
+                return;
+            }
+
             var errorHtml = string.Format("<html><body><h2>Failed to load URL {0} with error {1}.</h2></body></html>",
                                               request.Url, request.Failure);
 
