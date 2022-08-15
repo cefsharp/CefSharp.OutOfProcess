@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CefSharp.OutOfProcess.Internal;
-using CefSharp.Puppeteer;
+using CefSharp.Dom;
 using PInvoke;
 
 namespace CefSharp.OutOfProcess.WinForms
@@ -33,7 +33,7 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         public event EventHandler<PageErrorEventArgs> RuntimeExceptionThrown;
         /// <inheritdoc/>
-        public event EventHandler<Puppeteer.PopupEventArgs> Popup;
+        public event EventHandler<Dom.PopupEventArgs> Popup;
         /// <inheritdoc/>
         public event EventHandler<RequestEventArgs> NetworkRequest;
         /// <inheritdoc/>
@@ -133,7 +133,7 @@ namespace CefSharp.OutOfProcess.WinForms
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
             var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
-            _devToolsContext = Puppeteer.DevToolsContext.CreateForOutOfProcess(connection);
+            _devToolsContext = Dom.DevToolsContext.CreateForOutOfProcess(connection);
         }
 
         /// <inheritdoc/>

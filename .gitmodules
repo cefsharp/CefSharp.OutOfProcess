@@ -1,3 +1,3 @@
-[submodule "CefSharp.Puppeteer"]
-	path = CefSharp.Puppeteer
-	url = https://github.com/cefsharp/Puppeteer.git
+[submodule "CefSharp.Dom"]
+	path = CefSharp.Dom
+	url = https://github.com/cefsharp/CefSharp.Dom.git

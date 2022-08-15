@@ -11,7 +11,7 @@
     <PackageReference Include="StreamJsonRpc" Version="2.11.35" />
     <ProjectReference Include="..\CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj" />
 
-    <ProjectReference Include="..\CefSharp.Puppeteer\lib\PuppeteerSharp\CefSharp.DevTools.OutOfProcess.csproj" />
+    <ProjectReference Include="..\CefSharp.Dom\lib\PuppeteerSharp\CefSharp.Dom.OutOfProcess.csproj" />
   </ItemGroup>
 
   <ItemGroup>

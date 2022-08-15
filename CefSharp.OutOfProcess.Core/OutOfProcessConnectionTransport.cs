@@ -1,4 +1,4 @@
-﻿using CefSharp.Puppeteer.Transport;
+﻿using CefSharp.Dom.Transport;
 using System;
 using System.Threading.Tasks;
 
@@ -11,6 +11,7 @@ namespace CefSharp.OutOfProcess.WinForms
         public OutOfProcessHost OutOfProcessHost { get; }
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+        public event EventHandler<MessageErrorEventArgs> MessageError;
 
         public OutOfProcessConnectionTransport(int browserId, OutOfProcessHost outOfProcessHost)
         {

@@ -11,13 +11,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.WinFo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Core", "CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj", "{6ED4E6BF-F43A-429C-87FD-E66203EEC348}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.DevTools.OutOfProcess", "CefSharp.Puppeteer\lib\PuppeteerSharp\CefSharp.DevTools.OutOfProcess.csproj", "{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Interface", "CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj", "{D466B2AE-284B-430B-B707-F5D387724965}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CefSharp.OutOfProcess.Interface", "CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj", "{D466B2AE-284B-430B-B707-F5D387724965}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CefSharp.OutOfProcess.Wpf.HwndHost", "CefSharp.OutOfProcess.Wpf.HwndHost\CefSharp.OutOfProcess.Wpf.HwndHost.csproj", "{85605A77-9882-4595-96A1-089244BCCE24}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.HwndHost", "CefSharp.OutOfProcess.Wpf.HwndHost\CefSharp.OutOfProcess.Wpf.HwndHost.csproj", "{85605A77-9882-4595-96A1-089244BCCE24}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.HwndHost.Example", "CefSharp.OutOfProcess.Wpf.HwndHost.Example\CefSharp.OutOfProcess.Wpf.HwndHost.Example.csproj", "{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.Dom.OutOfProcess", "CefSharp.Dom\lib\PuppeteerSharp\CefSharp.Dom.OutOfProcess.csproj", "{7D39CC02-FB02-4F03-B329-E5DB567EC354}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,10 +41,6 @@ Global
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Release|Any CPU.Build.0 = Release|Any CPU
-		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{821ED4FE-5661-45D8-9523-44BDFB9B5DB6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D466B2AE-284B-430B-B707-F5D387724965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D466B2AE-284B-430B-B707-F5D387724965}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D466B2AE-284B-430B-B707-F5D387724965}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -57,6 +53,10 @@ Global
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

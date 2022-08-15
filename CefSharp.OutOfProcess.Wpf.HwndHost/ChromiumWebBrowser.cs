@@ -5,7 +5,7 @@
 using CefSharp.OutOfProcess.Internal;
 using CefSharp.OutOfProcess.WinForms;
 using CefSharp.OutOfProcess.Wpf.HwndHost.Internals;
-using CefSharp.Puppeteer;
+using CefSharp.Dom;
 using PInvoke;
 using System;
 using System.Runtime.CompilerServices;
@@ -16,6 +16,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using Window = System.Windows.Window;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost
 {
@@ -165,7 +166,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// <inheritdoc/>
         public event EventHandler<PageErrorEventArgs> RuntimeExceptionThrown;
         /// <inheritdoc/>
-        public event EventHandler<Puppeteer.PopupEventArgs> Popup;
+        public event EventHandler<Dom.PopupEventArgs> Popup;
         /// <inheritdoc/>
         public event EventHandler<RequestEventArgs> NetworkRequest;
         /// <inheritdoc/>
@@ -496,7 +497,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
             var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
-            _devToolsContext = Puppeteer.DevToolsContext.CreateForOutOfProcess(connection);
+            _devToolsContext = Dom.DevToolsContext.CreateForOutOfProcess(connection);
 
             return new HandleRef(null, _hwndHost);
         }
