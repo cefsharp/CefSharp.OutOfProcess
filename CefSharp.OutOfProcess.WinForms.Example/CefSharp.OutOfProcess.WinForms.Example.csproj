@@ -17,8 +17,4 @@
     </Compile>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CefSharp.OutOfProcess.WinForms\CefSharp.OutOfProcess.WinForms.csproj" />
-  </ItemGroup>
-
 </Project>

@@ -116,6 +116,7 @@ namespace CefSharp.OutOfProcess
                 RedirectStandardOutput = true,
             });
 
+
             _browserProcess.Exited += OnBrowserProcessExited;
 
             _jsonRpc = JsonRpc.Attach(_browserProcess.StandardInput.BaseStream, _browserProcess.StandardOutput.BaseStream);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using CefSharp.Internals;
 
@@ -12,12 +13,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         [STAThread]
         public static int Main(string[] args)
         {
+            File.AppendAllText("00mylog.txt", "foo started");
+
             Cef.EnableHighDPISupport();
 
-            //Debugger.Launch();
+            Debugger.Launch();
+
+            File.AppendAllText("00mylog.txt", "foo starte´d");
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
             var cachePath = CommandLineArgsParser.GetArgumentValue(args, "--cachePath");
+
+            File.AppendAllText("00mylog.txt", $"foo starte´d {parentProcessId} - {cachePath}");
 
             var parentProcess = Process.GetProcessById(parentProcessId);
 
@@ -25,6 +32,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 //By default CefSharp will use an in-memory cache, you need to specify a Cache Folder to persist data
                 CachePath = cachePath,
+                WindowlessRenderingEnabled = true,
                 MultiThreadedMessageLoop = false
             };
 

@@ -89,20 +89,16 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         Task IOutOfProcessClientRpc.CreateBrowser(IntPtr parentHwnd, string url, int id)
         {
-            //Debugger.Break();
+            Debugger.Break();
 
             return CefThread.ExecuteOnUiThread(() =>
             {
                 var browser = new OutOfProcessChromiumWebBrowser(_outOfProcessServer, id, url);
 
-                var windowInfo = new WindowInfo();
-                windowInfo.WindowName = "CefSharpBrowserProcess";
-                windowInfo.SetAsChild(parentHwnd);
-
-                //Disable Window activation by default
-                //https://bitbucket.org/chromiumembedded/cef/issues/1856/branch-2526-cef-activates-browser-window
-                windowInfo.ExStyle |= OutOfProcessChromiumWebBrowser.WS_EX_NOACTIVATE;
-
+                var windowInfo = Core.ObjectFactory.CreateWindowInfo();
+                windowInfo.SetAsWindowless(parentHwnd); // parentHwnd IntPtr.Zero
+                windowInfo.Width = 1000;
+                windowInfo.Height = 600;
                 browser.CreateBrowser(windowInfo);
 
                 _browsers.Add(browser);
