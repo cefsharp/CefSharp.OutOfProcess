@@ -355,10 +355,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         }
 
         /// <inheritdoc/>
-        public void LoadUrl(string url)
-        {
-            throw new NotImplementedException();
-        }
+        public void LoadUrl(string url) => BrowserCore.MainFrame.LoadUrl(url);
 
         /// <inheritdoc/>
         public Task<LoadUrlAsyncResponse> LoadUrlAsync(string url)

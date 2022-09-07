@@ -105,7 +105,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IOutOfProcessClientRpc.LoadUrl(int browserId, string address)
         {
             var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-            browser?.BrowserCore.MainFrame.LoadUrl(address);
+            browser?.LoadUrl(address);
         }
 
         void IOutOfProcessClientRpc.SendCaptureLostEvent(int browserId)
