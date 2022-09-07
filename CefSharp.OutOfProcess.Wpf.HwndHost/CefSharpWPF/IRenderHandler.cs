@@ -33,6 +33,6 @@ namespace CefSharp.Wpf
         /// <param name="width">width</param>
         /// <param name="height">height</param>
         /// <param name="image">image used as parent for rendered bitmap</param>
-        void OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect dirtyRect, IntPtr buffer, int width, int height, Image image);
+        void OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image);
     }
 }

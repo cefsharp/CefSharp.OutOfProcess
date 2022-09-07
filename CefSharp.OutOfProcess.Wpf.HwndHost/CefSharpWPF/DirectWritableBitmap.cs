@@ -3,8 +3,7 @@
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 using System;
-using System.IO.MemoryMappedFiles;
-using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -54,7 +53,7 @@ namespace CefSharp.Wpf.Rendering
             throw new NotImplementedException();
         }
 
-        void IRenderHandler.OnPaint(bool isPopup, Rect dirtyRect, IntPtr buffer, int width, int height, Image image)
+        void IRenderHandler.OnPaint(bool isPopup, Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image)
         {
             var writeableBitmap = image.Source as WriteableBitmap;
             if (writeableBitmap == null || writeableBitmap.PixelWidth != width || writeableBitmap.PixelHeight != height)
@@ -67,20 +66,25 @@ namespace CefSharp.Wpf.Rendering
                 writeableBitmap.Lock();
 
 
-                var file = MemoryMappedFile.OpenExisting("mytodo");
-                var accessor = file.CreateViewAccessor();
-                var bufferhandle = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
-                NativeMethodWrapper.MemoryCopy(writeableBitmap.BackBuffer, bufferhandle, writeableBitmap.BackBufferStride * writeableBitmap.PixelHeight);
+                try
+                {
+                    Marshal.Copy(data,0, writeableBitmap.BackBuffer, writeableBitmap.BackBufferStride * writeableBitmap.PixelHeight);
+                   // NativeMethodWrapper.MemoryCopy(writeableBitmap.BackBuffer, bufferhandle, writeableBitmap.BackBufferStride * writeableBitmap.PixelHeight);
 
-                if (invalidateDirtyRect)
-                {
-                    writeableBitmap.AddDirtyRect(new Int32Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height));
+                    if (invalidateDirtyRect)
+                    {
+                        writeableBitmap.AddDirtyRect(new Int32Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height));
+                    }
+                    else
+                    {
+                        writeableBitmap.AddDirtyRect(new Int32Rect(0, 0, writeableBitmap.PixelWidth, writeableBitmap.PixelHeight));
+                    }
+                    writeableBitmap.Unlock();
                 }
-                else
+                catch (Exception)
                 {
-                    writeableBitmap.AddDirtyRect(new Int32Rect(0, 0, writeableBitmap.PixelWidth, writeableBitmap.PixelHeight));
+                    ;
                 }
-                writeableBitmap.Unlock();
             }
         }
     }

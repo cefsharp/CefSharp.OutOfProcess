@@ -47,6 +47,6 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="chromiumVersion">Chromium Version</param>
         void NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion);
 
-        void NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer);
+        void NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data);
     }
 }

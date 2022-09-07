@@ -9,6 +9,7 @@ using CefSharp.Structs;
 using CefSharp.Enums;
 using CefSharp.Wpf.Internals;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -799,15 +800,15 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// browser to be notified of the change.
         /// </summary>
         public float DpiScaleFactor { get; set; } = 1;
+        public System.Drawing.Point browserLocation { get; internal set; }
+
+        public Rect viewRect { get; internal set; }
 
         /// <summary>
         /// Gets the ScreenInfo - currently used to get the DPI scale factor.
         /// </summary>
         /// <returns>ScreenInfo containing the current DPI scale factor</returns>
-        ScreenInfo? IRenderWebBrowser.GetScreenInfo()
-        {
-            return GetScreenInfo();
-        }
+        ScreenInfo? IRenderWebBrowser.GetScreenInfo() => GetScreenInfo();
 
         /// <summary>
         /// Gets the ScreenInfo - currently used to get the DPI scale factor.
@@ -834,14 +835,14 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             return screenInfo;
         }
 
-        Rect IRenderWebBrowser.GetViewRect()
-        {
-            return new Rect(0, 0, 600, 400);
-        }
+        Rect IRenderWebBrowser.GetViewRect() => viewRect;
 
         bool IRenderWebBrowser.GetScreenPoint(int viewX, int viewY, out int screenX, out int screenY)
         {
-            throw new NotImplementedException();
+            screenX = browserLocation.X;
+            screenY = browserLocation.Y;
+
+            return true;
         }
 
         void IRenderWebBrowser.OnAcceleratedPaint(PaintElementType type, Rect dirtyRect, IntPtr sharedHandle)
@@ -869,7 +870,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 {
                     ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
 
-                    mappedFile = MemoryMappedFile.CreateNew("mytodo", numberOfBytes, MemoryMappedFileAccess.ReadWrite);
+                    mappedFile = MemoryMappedFile.CreateOrOpen("mytodo", numberOfBytes, MemoryMappedFileAccess.ReadWrite);
 
                     viewAccessor = mappedFile.CreateViewAccessor();
                 }
@@ -877,10 +878,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 currentSize = new Size(width, height);
             }
 
-            NativeMethodWrapper.MemoryCopy(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, numberOfBytes);
+            try
+            {
+                byte[] bytes = new byte[numberOfBytes];
+                Marshal.Copy(buffer, bytes, 0, numberOfBytes);
+              //  NativeMethodWrapper.MemoryCopy(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, numberOfBytes);
 
-
-            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero); // TODO
+                _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, bytes); // TODO
+            }
+            catch (Exception e)
+            {
+                ;
+            }
         }
 
         protected void ReleaseMemoryMappedView(ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor stream)

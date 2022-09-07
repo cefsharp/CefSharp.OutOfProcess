@@ -44,7 +44,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             base.Dispose(disposing);
 
-            if(disposing)
+            if (disposing)
             {
                 _jsonRpc?.Dispose();
                 _jsonRpc = null;
@@ -97,21 +97,14 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 var windowInfo = Core.ObjectFactory.CreateWindowInfo();
                 windowInfo.SetAsWindowless(parentHwnd); // parentHwnd IntPtr.Zero
-                windowInfo.Width = 1000;
-                windowInfo.Height = 600;
+                windowInfo.Width = 0;
+                windowInfo.Height = 0;
                 browser.CreateBrowser(windowInfo);
 
                 _browsers.Add(browser);
 
                 return true;
             });
-        }
-
-        void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId)
-        {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-            browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
         }
 
         void IOutOfProcessClientRpc.SetFocus(int browserId, bool focus)
@@ -139,7 +132,24 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
 
-            browser?.GetBrowserHost().SendMouseMoveEvent(X,Y,mouseLeave, (CefEventFlags)modifiers);
+            browser?.GetBrowserHost().SendMouseMoveEvent(X, Y, mouseLeave, (CefEventFlags)modifiers);
+        }
+
+        void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId, int width, int height, int screenX, int screenY)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            var host = browser?.GetBrowserHost();
+
+            if (browser != null)
+            {
+                browser.browserLocation = new System.Drawing.Point(screenX, screenY);
+                browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
+
+                browser.viewRect = new Structs.Rect(0, 0, width, height);
+
+                host.WasResized();
+            }
         }
     }
 }

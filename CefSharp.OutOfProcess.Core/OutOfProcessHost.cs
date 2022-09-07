@@ -170,9 +170,9 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        public void NotifyMoveOrResizeStarted(int id)
+        public void NotifyMoveOrResizeStarted(int id, int width, int height, int screenX, int screenY)
         {
-            _outOfProcessClient.NotifyMoveOrResizeStarted(id);
+            _outOfProcessClient.NotifyMoveOrResizeStarted(id, width, height, screenX, screenY);
         }
 
         /// <summary>
@@ -218,11 +218,11 @@ namespace CefSharp.OutOfProcess
             return host.InitializedTask;
         }
 
-        void IOutOfProcessHostRpc.NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer)
+        void IOutOfProcessHostRpc.NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
-                chromiumWebBrowser.OnPaint(false, dirtyRect, width, height, buffer);
+                chromiumWebBrowser.OnPaint(false, dirtyRect, width, height, buffer, data);
             }
         }
 

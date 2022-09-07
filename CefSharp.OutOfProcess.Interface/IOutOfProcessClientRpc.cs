@@ -1,5 +1,6 @@
 ﻿using Copy.CefSharp;
 using System;
+using System.Drawing;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
@@ -44,7 +45,7 @@ namespace CefSharp.OutOfProcess.Interface
         /// This will dismiss any existing popups (dropdowns).
         /// </summary>
         /// <param name="browserId">browser Id</param>
-        void NotifyMoveOrResizeStarted(int browserId);
+        void NotifyMoveOrResizeStarted(int browserIdm, int width, int height, int screenX, int screenY);
 
         /// <summary>
         /// Set whether the browser is focused.

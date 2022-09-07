@@ -13,10 +13,11 @@ using System.Windows.Threading;
 using Window = System.Windows.Window;
 using System.Windows.Controls;
 using CefSharp.Wpf.Rendering;
-using CefSharp.Wpf;
 using System.Windows.Media;
 using CefSharp.Wpf.Internals;
 using Copy.CefSharp;
+using Application = System.Windows.Application;
+using CefSharp.Wpf;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost
 {
@@ -38,6 +39,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// The image that represents this browser instances
         /// </summary>
         private Image image = new Image();
+
         /// <summary>
         /// The popup image
         /// </summary>
@@ -147,12 +149,12 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
             UseLayoutRounding = true;
 
-
             {// copied from method build window core
                 _hwndHost = new WindowInteropHelper(Application.Current.MainWindow).Handle; // new line
                 _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
             }
         }
+
 
         /// <inheritdoc/>
         int IChromiumWebBrowserInternal.Id
@@ -350,13 +352,13 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             {
                 if (!IsDisposed)
                 {
+                    ResizeBrowser((int)ActualWidth, (int)ActualHeight);
+
                     OnIsBrowserInitializedChanged(false, true);
                     //To Minic the WPF behaviour this happens after OnIsBrowserInitializedChanged
                     IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
                 }
             });
-
-            ResizeBrowser((int)ActualWidth, (int)ActualHeight);
 
             if (_initialFocus)
             {
@@ -449,24 +451,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             if (newValue && !IsDisposed)
             {
-                //var task = this.GetZoomLevelAsync();
-                //task.ContinueWith(previous =>
-                //{
-                //    if (previous.Status == TaskStatus.RanToCompletion)
-                //    {
-                //        UiThreadRunAsync(() =>
-                //        {
-                //            if (!IsDisposed)
-                //            {
-                //                SetCurrentValue(ZoomLevelProperty, previous.Result);
-                //            }
-                //        });
-                //    }
-                //    else
-                //    {
-                //        throw new InvalidOperationException("Unexpected failure of calling CEF->GetZoomLevelAsync", previous.Exception);
-                //    }
-                //}, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
 
@@ -609,6 +593,9 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                     // ShowInternal(width, height);
                 }
             }
+
+            var point = PointToScreen(new Point());
+            _host.NotifyMoveOrResizeStarted(_id, width, height, (int)point.X, (int)point.Y);
         }
 
         /////// <summary>
@@ -705,7 +692,9 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             throw new NotImplementedException();
         }
 
-        void IChromiumWebBrowserInternal.OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect directRect, int width, int height, IntPtr buffer)
+
+        IntPtr sharedFromOutOfProcess;
+        void IChromiumWebBrowserInternal.OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect directRect, int width, int height, IntPtr buffer, byte[] data)
         {
             const int DefaultDpi = 96;
             var scale = DefaultDpi * 1.0;
@@ -713,7 +702,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
             UiThreadRunAsync(() =>
             {
-                RenderHandler.OnPaint(isPopup, directRect, buffer, width, height, this.image);
+                RenderHandler.OnPaint(isPopup, directRect, buffer, data, width, height, this.image);
                 InvalidateVisual();
             });
         }
