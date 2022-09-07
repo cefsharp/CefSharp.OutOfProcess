@@ -222,7 +222,7 @@ namespace CefSharp.OutOfProcess
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
-                chromiumWebBrowser.OnPaint(false, new Copy.CefSharp.Structs.Rect(), 100, 100, buffer);
+                chromiumWebBrowser.OnPaint(false, dirtyRect, width, height, buffer);
             }
         }
 

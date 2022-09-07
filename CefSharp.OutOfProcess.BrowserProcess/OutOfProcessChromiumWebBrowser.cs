@@ -8,6 +8,7 @@ using System.Diagnostics;
 using CefSharp.Structs;
 using CefSharp.Enums;
 using CefSharp.Wpf.Internals;
+using System.IO.MemoryMappedFiles;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -851,8 +852,55 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IRenderWebBrowser.OnPaint(PaintElementType type, Structs.Rect dirtyRect, IntPtr buffer, int width, int height)
         {
             var dirtyRectCopy = new Copy.CefSharp.Structs.Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height);
-            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, buffer);
+
+            // PixelFormat PixelFormat = PixelFormats.Pbgra32;
+            int BytesPerPixel = 32 / 8;
+            int pixels = width * height;
+            int numberOfBytes = pixels * BytesPerPixel;
+
+            bool createNewBitmap = mappedFile == null || currentSize.Height != height || currentSize.Width != width;
+
+            if (createNewBitmap)
+            {
+                //If the MemoryMappedFile is smaller than we need then create a larger one
+                //If it's larger then we need then rather than going through the costly expense of
+                //allocating a new one we'll just use the old one and only access the number of bytes we require.
+                if (viewAccessor == null || viewAccessor.Capacity < numberOfBytes)
+                {
+                    ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
+
+                    mappedFile = MemoryMappedFile.CreateNew("mytodo", numberOfBytes, MemoryMappedFileAccess.ReadWrite);
+
+                    viewAccessor = mappedFile.CreateViewAccessor();
+                }
+
+                currentSize = new Size(width, height);
+            }
+
+            NativeMethodWrapper.MemoryCopy(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, numberOfBytes);
+
+
+            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero); // TODO
         }
+
+        protected void ReleaseMemoryMappedView(ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor stream)
+        {
+            if (stream != null)
+            {
+                stream.Dispose();
+                stream = null;
+            }
+
+            if (mappedFile != null)
+            {
+                mappedFile.Dispose();
+                mappedFile = null;
+            }
+        }
+
+        MemoryMappedViewAccessor viewAccessor;
+        MemoryMappedFile mappedFile;
+        Size currentSize;
 
         void IRenderWebBrowser.OnCursorChange(IntPtr cursor, CursorType type, CursorInfo customCursorInfo)
         {

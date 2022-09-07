@@ -709,8 +709,13 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             const int DefaultDpi = 96;
             var scale = DefaultDpi * 1.0;
-            IRenderHandler RenderHandler = new WritableBitmapRenderHandler(scale, scale);
-            RenderHandler.OnPaint(isPopup, directRect, buffer, width, height, this.image);
+            IRenderHandler RenderHandler = new DirectWritableBitmapRenderHandler(scale, scale);
+
+            UiThreadRunAsync(() =>
+            {
+                RenderHandler.OnPaint(isPopup, directRect, buffer, width, height, this.image);
+                InvalidateVisual();
+            });
         }
 
         protected override void OnRender(DrawingContext drawingContext)
