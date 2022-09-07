@@ -4,10 +4,8 @@
 
 using System;
 using System.IO.MemoryMappedFiles;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Ink;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Rect = Copy.CefSharp.Structs.Rect;
@@ -19,8 +17,7 @@ namespace CefSharp.Wpf.Rendering
     /// into writeableBitmap.BackBuffer. No additional copies or locking are used.
     /// Can only be used when CEF UI thread and WPF UI thread are the same (MultiThreadedMessageLoop = false)
     /// </summary>
-    /// <seealso cref="CefSharp.Wpf.IRenderHandler" />
-    public class DirectWritableBitmapRenderHandler : IRenderHandler
+    public sealed class DirectWritableBitmapRenderHandler : IDisposable
     {
         private readonly double dpiX;
         private readonly double dpiY;
@@ -35,45 +32,34 @@ namespace CefSharp.Wpf.Rendering
         /// <param name="dispatcherPriority">priority at which the bitmap will be updated on the UI thread</param>
         public DirectWritableBitmapRenderHandler(double dpiX, double dpiY, bool invalidateDirtyRect = true, DispatcherPriority dispatcherPriority = DispatcherPriority.Render)
         {
-            ////if (!Cef.CurrentlyOnThread(CefThreadIds.TID_UI))
-            ////{
-            ////    throw new NotSupportedException("Can only be used when CEF is integrated into your WPF Message Loop (MultiThreadedMessageLoop = false).");
-            ////}
-
             this.dpiX = dpiX;
             this.dpiY = dpiY;
             this.invalidateDirtyRect = invalidateDirtyRect;
         }
 
-        void IDisposable.Dispose()
-        {
+        MemoryMappedFile mappedFile;
+        MemoryMappedViewAccessor viewAccessor;
 
-        }
-
-        void IRenderHandler.OnAcceleratedPaint(bool isPopup, Rect dirtyRect, IntPtr sharedHandle)
+        public void OnPaint(bool isPopup, Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image)
         {
-            throw new NotImplementedException();
-        }
+            var stride = width * 4;
+            var noOfBytes = stride * height;
+            if (mappedFile == null)
+            {
+                mappedFile = MemoryMappedFile.OpenExisting("mytodo");
+                viewAccessor = mappedFile.CreateViewAccessor(0, noOfBytes, MemoryMappedFileAccess.Read);
+            }
 
-        void IRenderHandler.OnPaint(bool isPopup, Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image)
-        {
             var writeableBitmap = image.Source as WriteableBitmap;
             if (writeableBitmap == null || writeableBitmap.PixelWidth != width || writeableBitmap.PixelHeight != height)
             {
                 image.Source = writeableBitmap = new WriteableBitmap(width, height, dpiX, dpiY, AbstractRenderHandler.PixelFormat, null);
+                viewAccessor = mappedFile.CreateViewAccessor(0, noOfBytes, MemoryMappedFileAccess.Read);
             }
 
             if (writeableBitmap != null)
             {
                 writeableBitmap.Lock();
-
-                var stride = width * 4;
-                var noOfBytes = stride * height;
-
-                // Marshal.Copy(data, 0, writeableBitmap.BackBuffer, writeableBitmap.BackBufferStride * writeableBitmap.PixelHeight);
-
-                var mappedFile = MemoryMappedFile.OpenExisting("mytodo");
-                var viewAccessor = mappedFile.CreateViewAccessor(0, noOfBytes, MemoryMappedFileAccess.Read);
 
                 if (invalidateDirtyRect)
                 {
@@ -93,18 +79,17 @@ namespace CefSharp.Wpf.Rendering
                     writeableBitmap.WritePixels(sourceRect, viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), noOfBytes, writeableBitmap.BackBufferStride);
                     writeableBitmap.Unlock();
                 }
-                // NativeMethodWrapper.MemoryCopy(writeableBitmap.BackBuffer, bufferhandle, writeableBitmap.BackBufferStride * writeableBitmap.PixelHeight);
-
-                //if (invalidateDirtyRect)
-                //{
-                //    writeableBitmap.AddDirtyRect(new Int32Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height));
-                //}
-                //else
-                //{
-                //    writeableBitmap.AddDirtyRect(new Int32Rect(0, 0, writeableBitmap.PixelWidth, writeableBitmap.PixelHeight));
-                //}
 
                 writeableBitmap.Unlock();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (mappedFile != null)
+            {
+                mappedFile.Dispose();
+                viewAccessor.Dispose();
             }
         }
     }

@@ -145,5 +145,10 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 host.WasResized();
             }
         }
+
+        void IOutOfProcessClientRpc.ExecuteJavaScriptAsync(int browserId, string script)
+        {
+            _browsers.FirstOrDefault(x => x.Id == browserId)?.BrowserCore.ExecuteScriptAsync(script);
+        }
     }
 }

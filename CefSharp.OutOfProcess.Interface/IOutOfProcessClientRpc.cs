@@ -53,5 +53,7 @@ namespace CefSharp.OutOfProcess.Interface
         void SendMouseClickEvent(int browserId, int X, int Y, MouseButtonType changedButton, bool mouseUp, int clickCount, CefEventFlags modifiers);
 
         void SendMouseMoveEvent(int browserId, int X, int Y, bool mouseLeave, CefEventFlags modifiers);
+
+        void ExecuteJavaScriptAsync(int browserId, string script);
     }
 }

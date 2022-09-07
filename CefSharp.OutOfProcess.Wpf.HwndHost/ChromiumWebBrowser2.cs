@@ -18,6 +18,7 @@ using CefSharp.Wpf.Internals;
 using Copy.CefSharp;
 using Application = System.Windows.Application;
 using CefSharp.Wpf;
+using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost
 {
@@ -94,7 +95,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// has been initialized.
         /// </summary>
         private bool _initialFocus;
-        private WritableBitmapRenderHandler RenderHandler;
+        private DirectWritableBitmapRenderHandler _renderHandler;
 
         /// <summary>
         /// Activates browser upon creation, the default value is false. Prior to version 73
@@ -276,6 +277,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
             if (disposing)
             {
+                _renderHandler?.Dispose();
+
                 SizeChanged -= OnSizeChanged;
                 IsVisibleChanged -= OnIsVisibleChanged;
 
@@ -690,19 +693,20 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             throw new NotImplementedException();
         }
 
-
-        IntPtr sharedFromOutOfProcess;
         void IChromiumWebBrowserInternal.OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect directRect, int width, int height, IntPtr buffer, byte[] data)
         {
             const int DefaultDpi = 96;
             var scale = DefaultDpi * 1.0;
-            IRenderHandler RenderHandler = new DirectWritableBitmapRenderHandler(scale, scale);
+            if (_renderHandler == null)
+            {
+                _renderHandler = new DirectWritableBitmapRenderHandler(scale, scale);
+            }
 
             UiThreadRunAsync(() =>
             {
-                RenderHandler.OnPaint(isPopup, directRect, buffer, data, width, height, this.image);
+                _renderHandler.OnPaint(isPopup, directRect, buffer, data, width, height, this.image);
                 InvalidateVisual();
-            });
+            }, DispatcherPriority.Render);
         }
 
         protected override void OnRender(DrawingContext drawingContext)
@@ -888,5 +892,14 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         }
 
         #endregion
+
+        //TODO
+        //public event EventArgs FrameLoaded;
+
+        //TODO
+        //internal Task ExecuteJavascriptAsync(string script)
+        //{
+        //    _host.ExecuteJavascriptAsync(script);
+        //}
     }
 }

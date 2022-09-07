@@ -16,7 +16,7 @@ namespace CefSharp.Wpf.Rendering
     /// Implements the basics of a <see cref="IRenderHandler"/>
     /// </summary>
     /// <seealso cref="CefSharp.Wpf.IRenderHandler" />
-    public abstract class AbstractRenderHandler : IDisposable, IRenderHandler
+    public abstract class AbstractRenderHandler : IDisposable
     {
         internal static readonly PixelFormat PixelFormat = PixelFormats.Pbgra32;
         internal static int BytesPerPixel = PixelFormat.BitsPerPixel / 8;
@@ -95,18 +95,6 @@ namespace CefSharp.Wpf.Rendering
                 mappedFile.Dispose();
                 mappedFile = null;
             }
-        }
-
-        /// <summary>
-        /// Called when an element has been rendered to the shared texture handle.
-        /// This method is only called when <see cref="IWindowInfo.SharedTextureEnabled"/> is set to true
-        /// </summary>
-        /// <param name="isPopup">indicates whether the element is the view or the popup widget.</param>
-        /// <param name="dirtyRect">contains the set of rectangles in pixel coordinates that need to be repainted</param>
-        /// <param name="sharedHandle">is the handle for a D3D11 Texture2D that can be accessed via ID3D11Device using the OpenSharedResource method.</param>
-        public virtual void OnAcceleratedPaint(bool isPopup, Copy.CefSharp.Structs.Rect dirtyRect, IntPtr sharedHandle)
-        {
-            // NOT USED
         }
 
         /// <summary>
