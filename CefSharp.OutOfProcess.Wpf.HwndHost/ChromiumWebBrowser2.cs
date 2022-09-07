@@ -96,6 +96,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// </summary>
         private bool _initialFocus;
         private DirectWritableBitmapRenderHandler _renderHandler;
+        private WindowState _previousWindowState;
 
         /// <summary>
         /// Activates browser upon creation, the default value is false. Prior to version 73
@@ -180,8 +181,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 var window = source.RootVisual as Window;
                 if (window != null)
                 {
-                    //   window.StateChanged += OnWindowStateChanged;
-                    //   window.LocationChanged += OnWindowLocationChanged;
+                    window.StateChanged += OnWindowStateChanged;
+                    window.LocationChanged += OnWindowLocationChanged;
                     _sourceWindow = window;
 
                     if (CleanupElement == null)
@@ -203,8 +204,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 var window = args.OldSource.RootVisual as Window;
                 if (window != null)
                 {
-                    //  window.StateChanged -= OnWindowStateChanged;
-                    //  window.LocationChanged -= OnWindowLocationChanged;
+                    window.StateChanged -= OnWindowStateChanged;
+                    window.LocationChanged -= OnWindowLocationChanged;
                     _sourceWindow = null;
                 }
             }
@@ -287,8 +288,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 // fired before Dispose
                 if (_sourceWindow != null)
                 {
-                    //  _sourceWindow.StateChanged -= OnWindowStateChanged;
-                    //  _sourceWindow.LocationChanged -= OnWindowLocationChanged;
+                    _sourceWindow.StateChanged -= OnWindowStateChanged;
+                    _sourceWindow.LocationChanged -= OnWindowLocationChanged;
                     _sourceWindow = null;
                 }
 
@@ -301,12 +302,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                     IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
                 });
 
-                // Don't maintain a reference to event listeners anylonger:
-                //ConsoleMessage = null;
-                //FrameLoadEnd = null;
-                //FrameLoadStart = null;
                 IsBrowserInitializedChanged = null;
-                //LoadError = null;
                 LoadingStateChanged = null;
                 StatusMessage = null;
 
@@ -575,28 +571,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// <param name="height">height</param>
         protected virtual void ResizeBrowser(int width, int height)
         {
-            if (_browserHwnd != IntPtr.Zero)
-            {
-                if (_dpiScale > 1)
-                {
-                    width = (int)(width * _dpiScale);
-                    height = (int)(height * _dpiScale);
-                }
-
-                if (width == 0 && height == 0)
-                {
-                    // For windowed browsers when the frame window is minimized set the
-                    // browser window size to 0x0 to reduce resource usage.
-                    //   HideInternal();
-                }
-                else
-                {
-                    // ShowInternal(width, height);
-                }
-            }
-
-            var point = PointToScreen(new Point());
-            _host.NotifyMoveOrResizeStarted(_id, width, height, (int)point.X, (int)point.Y);
+            NotifyResizeMoveBrowser();
         }
 
         /////// <summary>
@@ -622,42 +597,49 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         ////    }
         ////}
 
-        ////private void OnWindowStateChanged(object sender, EventArgs e)
-        ////{
-        ////    var window = (Window)sender;
+        private void OnWindowStateChanged(object sender, EventArgs e)
+        {
+            var window = (Window)sender;
 
-        ////    switch (window.WindowState)
-        ////    {
-        ////        case WindowState.Normal:
-        ////        case WindowState.Maximized:
-        ////        {
-        ////            if (_previousWindowState == WindowState.Minimized && InternalIsBrowserInitialized())
-        ////            {
-        ////                ResizeBrowser((int)ActualWidth, (int)ActualHeight);
-        ////            }
-        ////            break;
-        ////        }
-        ////        case WindowState.Minimized:
-        ////        {
-        ////            if (InternalIsBrowserInitialized())
-        ////            {
-        ////                //Set the browser size to 0,0 to reduce CPU usage
-        ////                ResizeBrowser(0, 0);
-        ////            }
-        ////            break;
-        ////        }
-        ////    }
+            switch (window.WindowState)
+            {
+                case WindowState.Normal:
+                case WindowState.Maximized:
+                    {
+                        if (_previousWindowState == WindowState.Minimized)
+                        {
+                            NotifyResizeMoveBrowser();
+                        }
+                        break;
+                    }
+                case WindowState.Minimized:
+                    {
+                        NotifyHideBrowser();
+                        break;
+                    }
+            }
 
-        ////    _previousWindowState = window.WindowState;
-        ////}
+            _previousWindowState = window.WindowState;
+        }
 
-        ////private void OnWindowLocationChanged(object sender, EventArgs e)
-        ////{
-        ////    if (InternalIsBrowserInitialized())
-        ////    {
-        ////        _host.NotifyMoveOrResizeStarted(_id);
-        ////    }
-        ////}
+        private void NotifyHideBrowser()
+        {
+            if (InternalIsBrowserInitialized())
+            {
+                _host.NotifyMoveOrResizeStarted(_id, 0, 0, 0, 0);
+            }
+        }
+
+        private void NotifyResizeMoveBrowser()
+        {
+            if (InternalIsBrowserInitialized())
+            {
+                var point = PointToScreen(new Point());
+                _host.NotifyMoveOrResizeStarted(_id, (int)ActualWidth, (int)ActualHeight, (int)point.X, (int)point.Y);
+            }
+        }
+
+        private void OnWindowLocationChanged(object sender, EventArgs e) => NotifyResizeMoveBrowser();
 
         /// <summary>
         /// Throw exception if browser not initialized.
@@ -898,5 +880,25 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
         //TODO
         internal void ExecuteJavaScriptAsync(string script) => _host.Client().ExecuteJavaScriptAsync(_id, script);
+
+        void IChromiumWebBrowserInternal.OnFrameLoadStart(string frameName, string url)
+        {
+            OnFrameLoadStart(frameName, url);
+        }
+
+        void IChromiumWebBrowserInternal.OnFrameLoadEnd(string frameName, string url, int httpStatusCode)
+        {
+            OnFrameLoadEnd(frameName, url, httpStatusCode);
+        }
+
+        internal virtual void OnFrameLoadStart(string frameName, string url)
+        {
+
+        }
+
+        internal virtual void OnFrameLoadEnd(string frameName, string url, int httpStatusCode)
+        {
+
+        }
     }
 }

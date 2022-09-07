@@ -227,5 +227,21 @@ namespace CefSharp.OutOfProcess
         }
 
         public IOutOfProcessClientRpc Client() => _outOfProcessClient;
+
+        void IOutOfProcessHostRpc.NotifyFrameLoadStart(int browserId, string frameName, string url)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.OnFrameLoadStart(frameName, url);
+            }
+        }
+
+        void IOutOfProcessHostRpc.NotifyFrameLoadEnd(int browserId, string frameName, string url, int httpStatusCode)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.OnFrameLoadEnd(frameName, url, httpStatusCode);
+            }
+        }
     }
 }

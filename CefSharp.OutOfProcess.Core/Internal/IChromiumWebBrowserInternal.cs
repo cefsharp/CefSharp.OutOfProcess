@@ -18,5 +18,7 @@ namespace CefSharp.OutOfProcess.Internal
         void OnPaint(bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
         void SetAddress(string address);
         void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading);
+        void OnFrameLoadStart(string frameName, string url);
+        void OnFrameLoadEnd(string frameName, string url, int httpStatusCode);
     }
 }

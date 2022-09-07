@@ -10,6 +10,7 @@ using CefSharp.Enums;
 using CefSharp.Wpf.Internals;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
+using System.Net;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -264,6 +265,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnFrameLoadStart(FrameLoadStartEventArgs args)
         {
             FrameLoadStart?.Invoke(this, args);
+            _outofProcessHostRpc.NotifyFrameLoadStart(_id, args.Frame.Name, args.Url);
         }
 
         /// <summary>
@@ -273,6 +275,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnFrameLoadEnd(FrameLoadEndEventArgs args)
         {
             FrameLoadEnd?.Invoke(this, args);
+            _outofProcessHostRpc.NotifyFrameLoadEnd(_id, args.Frame.Name, args.Url, args.HttpStatusCode);
         }
 
         /// <summary>
