@@ -40,13 +40,13 @@ namespace CefSharp.Wpf.Rendering
         MemoryMappedFile mappedFile;
         MemoryMappedViewAccessor viewAccessor;
 
-        public void OnPaint(bool isPopup, Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image)
+        public void OnPaint(bool isPopup, Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image, string file)
         {
             var stride = width * 4;
             var noOfBytes = stride * height;
             if (mappedFile == null)
             {
-                mappedFile = MemoryMappedFile.OpenExisting("mytodo");
+                mappedFile = MemoryMappedFile.OpenExisting(file);
                 viewAccessor = mappedFile.CreateViewAccessor(0, noOfBytes, MemoryMappedFileAccess.Read);
             }
 

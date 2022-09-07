@@ -837,8 +837,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             // PixelFormat PixelFormat = PixelFormats.Pbgra32;
             int BytesPerPixel = 32 / 8;
-            int pixels = 3600 * 2000;// width * height;
-            int numberOfBytes = pixels * BytesPerPixel;
+            int maximumPixels = 3600 * 2000;// width * height;
+            int maximumNumberOfBytes = maximumPixels * BytesPerPixel;
 
             bool createNewBitmap = mappedFile == null || currentSize.Height != height || currentSize.Width != width;
 
@@ -847,30 +847,27 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 //If the MemoryMappedFile is smaller than we need then create a larger one
                 //If it's larger then we need then rather than going through the costly expense of
                 //allocating a new one we'll just use the old one and only access the number of bytes we require.
-                if (viewAccessor == null || viewAccessor.Capacity < numberOfBytes)
+                if (viewAccessor == null)
                 {
-                    ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
+                    //  ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
 
-                    mappedFile = MemoryMappedFile.CreateNew("mytodo", numberOfBytes, MemoryMappedFileAccess.ReadWrite);
+                    renderFileName = $"0render_{_id}_{Guid.NewGuid()}";
+                    mappedFile = MemoryMappedFile.CreateNew(renderFileName, maximumNumberOfBytes, MemoryMappedFileAccess.ReadWrite);
 
-                    viewAccessor = mappedFile.CreateViewAccessor(0, numberOfBytes, MemoryMappedFileAccess.Write);
+                    viewAccessor = mappedFile.CreateViewAccessor(0, maximumNumberOfBytes, MemoryMappedFileAccess.Write);
                 }
 
                 currentSize = new Size(width, height);
-            }
-
-            var myhandle = viewAccessor.SafeMemoryMappedViewHandle;
-            if (myhandle.IsClosed || myhandle.IsInvalid)
-            {
-                return;
             }
 
             var usedBytes = width * height * BytesPerPixel;
 
             CopyMemory(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, (uint)usedBytes);
             viewAccessor.Flush();
-            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, null);
+            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, null, renderFileName);
         }
+
+        string renderFileName;
 
         [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
         public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);

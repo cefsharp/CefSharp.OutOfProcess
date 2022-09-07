@@ -209,11 +209,11 @@ namespace CefSharp.OutOfProcess
             return host.InitializedTask;
         }
 
-        void IOutOfProcessHostRpc.NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data)
+        void IOutOfProcessHostRpc.NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file)
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
             {
-                chromiumWebBrowser.OnPaint(false, dirtyRect, width, height, buffer, data);
+                chromiumWebBrowser.OnPaint(false, dirtyRect, width, height, buffer, data, file);
             }
         }
 
@@ -225,5 +225,7 @@ namespace CefSharp.OutOfProcess
         {
             _outOfProcessClient.SendMouseClickEvent(browserId, x, y, changedButton, mouseUp, clickCount, modifiers);
         }
+
+        public IOutOfProcessClientRpc Client() => _outOfProcessClient;
     }
 }

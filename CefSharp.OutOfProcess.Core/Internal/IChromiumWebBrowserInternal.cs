@@ -15,7 +15,7 @@ namespace CefSharp.OutOfProcess.Internal
         /// </summary>
         /// <param name="hwnd">Hwnd</param>
         void OnAfterBrowserCreated(IntPtr hwnd);
-        void OnPaint(bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data);
+        void OnPaint(bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
         void SetAddress(string address);
         void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading);
     }

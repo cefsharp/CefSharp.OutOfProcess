@@ -693,7 +693,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             throw new NotImplementedException();
         }
 
-        void IChromiumWebBrowserInternal.OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect directRect, int width, int height, IntPtr buffer, byte[] data)
+        void IChromiumWebBrowserInternal.OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect directRect, int width, int height, IntPtr buffer, byte[] data, string file)
         {
             const int DefaultDpi = 96;
             var scale = DefaultDpi * 1.0;
@@ -704,7 +704,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
             UiThreadRunAsync(() =>
             {
-                _renderHandler.OnPaint(isPopup, directRect, buffer, data, width, height, this.image);
+                _renderHandler.OnPaint(isPopup, directRect, buffer, data, width, height, this.image, file);
                 InvalidateVisual();
             }, DispatcherPriority.Render);
         }
@@ -897,9 +897,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         //public event EventArgs FrameLoaded;
 
         //TODO
-        //internal Task ExecuteJavascriptAsync(string script)
-        //{
-        //    _host.ExecuteJavascriptAsync(script);
-        //}
+        internal void ExecuteJavaScriptAsync(string script) => _host.Client().ExecuteJavaScriptAsync(_id, script);
     }
 }
