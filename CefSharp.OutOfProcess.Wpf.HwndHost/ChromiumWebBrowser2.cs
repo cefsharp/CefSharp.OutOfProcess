@@ -3,22 +3,20 @@
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 using CefSharp.OutOfProcess.Internal;
-using CefSharp.OutOfProcess.WinForms;
-using CefSharp.OutOfProcess.Wpf.HwndHost.Internals;
-using CefSharp.Dom;
-using PInvoke;
 using System;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Window = System.Windows.Window;
 using System.Windows.Controls;
-using Frame = CefSharp.Dom.Frame;
+using CefSharp.Wpf.Rendering;
+using CefSharp.Wpf;
+using System.Windows.Media;
+using CefSharp.Wpf.Internals;
+using Copy.CefSharp;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost
 {
@@ -36,11 +34,17 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             "The undelying CefBrowser instance is not yet initialized. Use the IsBrowserInitializedChanged event and check " +
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
 
+        /// <summary>
+        /// The image that represents this browser instances
+        /// </summary>
+        private Image image = new Image();
+        /// <summary>
+        /// The popup image
+        /// </summary>
+        private Image popupImage;
 
         private OutOfProcessHost _host;
         private IntPtr _browserHwnd = IntPtr.Zero;
-        private OutOfProcessConnectionTransport _devToolsContextConnectionTransport;
-        private IDevToolsContext _devToolsContext;
         private int _id;
         private bool _devToolsReady;
 
@@ -88,6 +92,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// has been initialized.
         /// </summary>
         private bool _initialFocus;
+        private WritableBitmapRenderHandler RenderHandler;
 
         /// <summary>
         /// Activates browser upon creation, the default value is false. Prior to version 73
@@ -110,127 +115,12 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         }
 
         /// <inheritdoc/>
-        public event EventHandler DOMContentLoaded;
-        /// <inheritdoc/>
-        public event EventHandler<ErrorEventArgs> BrowserProcessCrashed;
-        /// <inheritdoc/>
-        public event EventHandler<FrameEventArgs> FrameAttached;
-        /// <inheritdoc/>
-        public event EventHandler<FrameEventArgs> FrameDetached;
-        /// <inheritdoc/>
-        public event EventHandler<FrameEventArgs> FrameNavigated;
-        /// <inheritdoc/>
         public event EventHandler JavaScriptLoad;
-        /// <inheritdoc/>
-        public event EventHandler<PageErrorEventArgs> RuntimeExceptionThrown;
-        /// <inheritdoc/>
-        public event EventHandler<Dom.PopupEventArgs> Popup;
-        /// <inheritdoc/>
-        public event EventHandler<RequestEventArgs> NetworkRequest;
-        /// <inheritdoc/>
-        public event EventHandler<RequestEventArgs> NetworkRequestFailed;
-        /// <inheritdoc/>
-        public event EventHandler<RequestEventArgs> NetworkRequestFinished;
-        /// <inheritdoc/>
-        public event EventHandler<RequestEventArgs> NetworkRequestServedFromCache;
-        /// <inheritdoc/>
-        public event EventHandler<ResponseCreatedEventArgs> NetworkResponse;
-        /// <inheritdoc/>
-        public event EventHandler<AddressChangedEventArgs> AddressChanged;
+
         /// <inheritdoc/>
         public event EventHandler<LoadingStateChangedEventArgs> LoadingStateChanged;
         /// <inheritdoc/>
         public event EventHandler<StatusMessageEventArgs> StatusMessage;
-        /// <inheritdoc/>
-        public event EventHandler<ConsoleEventArgs> ConsoleMessage;
-        /// <inheritdoc/>
-        public event EventHandler<LifecycleEventArgs> LifecycleEvent;
-        /// <inheritdoc/>
-        public event EventHandler DevToolsContextAvailable;
-
-        /// <summary>
-        /// Navigates to the previous page in the browser history. Will automatically be enabled/disabled depending on the
-        /// browser state.
-        /// </summary>
-        /// <value>The back command.</value>
-        public ICommand BackCommand { get; private set; }
-        /// <summary>
-        /// Navigates to the next page in the browser history. Will automatically be enabled/disabled depending on the
-        /// browser state.
-        /// </summary>
-        /// <value>The forward command.</value>
-        public ICommand ForwardCommand { get; private set; }
-        /// <summary>
-        /// Reloads the content of the current page. Will automatically be enabled/disabled depending on the browser state.
-        /// </summary>
-        /// <value>The reload command.</value>
-        public ICommand ReloadCommand { get; private set; }
-        /// <summary>
-        /// Prints the current browser contents.
-        /// </summary>
-        /// <value>The print command.</value>
-        public ICommand PrintCommand { get; private set; }
-        /// <summary>
-        /// Increases the zoom level.
-        /// </summary>
-        /// <value>The zoom in command.</value>
-        public ICommand ZoomInCommand { get; private set; }
-        /// <summary>
-        /// Decreases the zoom level.
-        /// </summary>
-        /// <value>The zoom out command.</value>
-        public ICommand ZoomOutCommand { get; private set; }
-        /// <summary>
-        /// Resets the zoom level to the default. (100%)
-        /// </summary>
-        /// <value>The zoom reset command.</value>
-        public ICommand ZoomResetCommand { get; private set; }
-        /// <summary>
-        /// Opens up a new program window (using the default text editor) where the source code of the currently displayed web
-        /// page is shown.
-        /// </summary>
-        /// <value>The view source command.</value>
-        public ICommand ViewSourceCommand { get; private set; }
-        /// <summary>
-        /// Command which cleans up the Resources used by the ChromiumWebBrowser
-        /// </summary>
-        /// <value>The cleanup command.</value>
-        public ICommand CleanupCommand { get; private set; }
-        /// <summary>
-        /// Stops loading the current page.
-        /// </summary>
-        /// <value>The stop command.</value>
-        public ICommand StopCommand { get; private set; }
-        /// <summary>
-        /// Cut selected text to the clipboard.
-        /// </summary>
-        /// <value>The cut command.</value>
-        public ICommand CutCommand { get; private set; }
-        /// <summary>
-        /// Copy selected text to the clipboard.
-        /// </summary>
-        /// <value>The copy command.</value>
-        public ICommand CopyCommand { get; private set; }
-        /// <summary>
-        /// Paste text from the clipboard.
-        /// </summary>
-        /// <value>The paste command.</value>
-        public ICommand PasteCommand { get; private set; }
-        /// <summary>
-        /// Select all text.
-        /// </summary>
-        /// <value>The select all command.</value>
-        public ICommand SelectAllCommand { get; private set; }
-        /// <summary>
-        /// Undo last action.
-        /// </summary>
-        /// <value>The undo command.</value>
-        public ICommand UndoCommand { get; private set; }
-        /// <summary>
-        /// Redo last action.
-        /// </summary>
-        /// <value>The redo command.</value>
-        public ICommand RedoCommand { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChromiumWebBrowser2"/> instance.
@@ -239,7 +129,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// <param name="initialAddress">address to load initially</param>
         public ChromiumWebBrowser2(OutOfProcessHost host, string initialAddress = null)
         {
-            if(host == null)
+            if (host == null)
             {
                 throw new ArgumentNullException(nameof(host));
             }
@@ -250,27 +140,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             Focusable = true;
             FocusVisualStyle = null;
 
-            WebBrowser = this;
-
             SizeChanged += OnSizeChanged;
             IsVisibleChanged += OnIsVisibleChanged;
-
-            BackCommand = new DelegateCommand(() => _devToolsContext.GoBackAsync(), () => CanGoBack);
-            ForwardCommand = new DelegateCommand(() => _devToolsContext.GoForwardAsync(), () => CanGoForward);
-            ReloadCommand = new DelegateCommand(() => _devToolsContext.ReloadAsync(), () => !IsLoading);
-            //PrintCommand = new DelegateCommand(this.Print);
-            //ZoomInCommand = new DelegateCommand(ZoomIn);
-            //ZoomOutCommand = new DelegateCommand(ZoomOut);
-            //ZoomResetCommand = new DelegateCommand(ZoomReset);
-            //ViewSourceCommand = new DelegateCommand(this.ViewSource);
-            CleanupCommand = new DelegateCommand(Dispose);
-            //StopCommand = new DelegateCommand(this.Stop);
-            //CutCommand = new DelegateCommand(this.Cut);
-            //CopyCommand = new DelegateCommand(this.Copy);
-            //PasteCommand = new DelegateCommand(this.Paste);
-            //SelectAllCommand = new DelegateCommand(this.SelectAll);
-            //UndoCommand = new DelegateCommand(this.Undo);
-            //RedoCommand = new DelegateCommand(this.Redo);
 
             PresentationSource.AddSourceChangedHandler(this, PresentationSourceChangedHandler);
 
@@ -280,11 +151,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             {// copied from method build window core
                 _hwndHost = new WindowInteropHelper(Application.Current.MainWindow).Handle; // new line
                 _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
-
-                _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
-
-                var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
-                _devToolsContext = Dom.DevToolsContext.CreateForOutOfProcess(connection);
             }
         }
 
@@ -294,98 +160,9 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             get { return _id; }
         }
 
-        /// <summary>
-        /// DevToolsContext - provides communication with the underlying browser
-        /// </summary>
-        public IDevToolsContext DevToolsContext
-        {
-            get
-            {
-                if (_devToolsReady)
-                {
-                    return _devToolsContext;
-                }
-
-                return default;
-            }
-        }
-
         /// <inheritdoc/>
         public bool IsBrowserInitialized => _browserHwnd != IntPtr.Zero;
 
-
-        /// <inheritdoc/>
-        public Frame[] Frames => _devToolsContext == null ? null : _devToolsContext.Frames;
-
-        /// <inheritdoc/>
-        public Frame MainFrame => _devToolsContext == null ? null : _devToolsContext.MainFrame;
-
-        /// <inheritdoc/>
-        void IChromiumWebBrowserInternal.OnDevToolsMessage(string jsonMsg)
-        {
-            _devToolsContextConnectionTransport?.InvokeMessageReceived(jsonMsg);
-        }
-
-        /// <inheritdoc/>
-        void IChromiumWebBrowserInternal.OnDevToolsReady()
-        {
-            var ctx = (DevToolsContext)_devToolsContext;
-
-            ctx.DOMContentLoaded += DOMContentLoaded;
-            ctx.Error += BrowserProcessCrashed;
-            ctx.FrameAttached += FrameAttached;
-            ctx.FrameDetached += FrameDetached;
-            ctx.FrameNavigated += FrameNavigated;
-            ctx.Load += JavaScriptLoad;
-            ctx.PageError += RuntimeExceptionThrown;
-            ctx.Popup += Popup;
-            ctx.Request += NetworkRequest;
-            ctx.RequestFailed += NetworkRequestFailed;
-            ctx.RequestFinished += NetworkRequestFinished;
-            ctx.RequestServedFromCache += NetworkRequestServedFromCache;
-            ctx.Response += NetworkResponse;
-            ctx.Console += ConsoleMessage;
-            ctx.LifecycleEvent += LifecycleEvent;
-
-            _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
-            {
-                _devToolsReady = true;
-
-                DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
-
-                //NOW the user can start using the devtools context
-            }, TaskScheduler.Current);
-
-            // Only call Load if initialAddress is null and Address is not empty
-            if (string.IsNullOrEmpty(_initialAddress) && !string.IsNullOrEmpty(Address))
-            {
-                LoadUrl(Address);
-            }
-        }
-
-        /// <inheritdoc/>
-        public void LoadUrl(string url)
-        {
-            _ = _devToolsContext.GoToAsync(url);
-        }
-
-        /// <inheritdoc/>
-        public Task<Response> LoadUrlAsync(string url, int? timeout = null, WaitUntilNavigation[] waitUntil = null)
-        {
-            return _devToolsContext.GoToAsync(url, timeout, waitUntil);
-        }
-
-        /// <inheritdoc/>
-        public Task<Response> GoBackAsync(NavigationOptions options = null)
-        {
-            return _devToolsContext.GoBackAsync(options);
-        }
-
-        /// <inheritdoc/>
-        public Task<Response> GoForwardAsync(NavigationOptions options = null)
-        {
-            return _devToolsContext.GoForwardAsync(options);
-        }
 
         private void PresentationSourceChangedHandler(object sender, SourceChangedEventArgs args)
         {
@@ -400,8 +177,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 var window = source.RootVisual as Window;
                 if (window != null)
                 {
-                 //   window.StateChanged += OnWindowStateChanged;
-                 //   window.LocationChanged += OnWindowLocationChanged;
+                    //   window.StateChanged += OnWindowStateChanged;
+                    //   window.LocationChanged += OnWindowLocationChanged;
                     _sourceWindow = window;
 
                     if (CleanupElement == null)
@@ -423,8 +200,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 var window = args.OldSource.RootVisual as Window;
                 if (window != null)
                 {
-                  //  window.StateChanged -= OnWindowStateChanged;
-                  //  window.LocationChanged -= OnWindowLocationChanged;
+                    //  window.StateChanged -= OnWindowStateChanged;
+                    //  window.LocationChanged -= OnWindowLocationChanged;
                     _sourceWindow = null;
                 }
             }
@@ -446,11 +223,11 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             ResizeBrowser((int)e.NewSize.Width, (int)e.NewSize.Height);
         }
 
-     
+
         ///<inheritdoc/>
         protected override void OnGotKeyboardFocus(KeyboardFocusChangedEventArgs e)
         {
-            if(!e.Handled)
+            if (!e.Handled)
             {
                 if (InternalIsBrowserInitialized())
                 {
@@ -505,8 +282,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 // fired before Dispose
                 if (_sourceWindow != null)
                 {
-                  //  _sourceWindow.StateChanged -= OnWindowStateChanged;
-                  //  _sourceWindow.LocationChanged -= OnWindowLocationChanged;
+                    //  _sourceWindow.StateChanged -= OnWindowStateChanged;
+                    //  _sourceWindow.LocationChanged -= OnWindowLocationChanged;
                     _sourceWindow = null;
                 }
 
@@ -517,8 +294,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
                     //To Minic the WPF behaviour this happens after OnIsBrowserInitializedChanged
                     IsBrowserInitializedChanged?.Invoke(this, EventArgs.Empty);
-
-                    WebBrowser = null;
                 });
 
                 // Don't maintain a reference to event listeners anylonger:
@@ -529,7 +304,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 //LoadError = null;
                 LoadingStateChanged = null;
                 StatusMessage = null;
-                TitleChanged = null;
 
                 if (CleanupElement != null)
                 {
@@ -546,9 +320,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 _ignoreUriChange = true;
                 SetCurrentValue(AddressProperty, address);
                 _ignoreUriChange = false;
-
-                // The tooltip should obviously also be reset (and hidden) when the address changes.
-                SetCurrentValue(TooltipTextProperty, null);
             });
         }
 
@@ -557,46 +328,10 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             UiThreadRunAsync(() =>
             {
-                SetCurrentValue(CanGoBackProperty, canGoBack);
-                SetCurrentValue(CanGoForwardProperty, canGoForward);
                 SetCurrentValue(IsLoadingProperty, isLoading);
-
-                ((DelegateCommand)BackCommand).RaiseCanExecuteChanged();
-                ((DelegateCommand)ForwardCommand).RaiseCanExecuteChanged();
-                ((DelegateCommand)ReloadCommand).RaiseCanExecuteChanged();
             });
 
             LoadingStateChanged?.Invoke(this, new LoadingStateChangedEventArgs(canGoBack, canGoForward, isLoading));
-        }
-
-        /// <inheritdoc/>
-        void IChromiumWebBrowserInternal.SetTitle(string title)
-        {
-            UiThreadRunAsync(() => SetCurrentValue(TitleProperty, title));
-        }
-
-        /// <summary>
-        /// Sets the tooltip text.
-        /// </summary>
-        /// <param name="tooltipText">The tooltip text.</param>
-        //void IWebBrowserInternal.SetTooltipText(string tooltipText)
-        //{
-        //    UiThreadRunAsync(() => SetCurrentValue(TooltipTextProperty, tooltipText));
-        //}
-
-        /// <summary>
-        /// Handles the <see cref="E:ConsoleMessage" /> event.
-        /// </summary>
-        /// <param name="args">The <see cref="ConsoleMessageEventArgs"/> instance containing the event data.</param>
-        //void IWebBrowserInternal.OnConsoleMessage(ConsoleMessageEventArgs args)
-        //{
-        //    ConsoleMessage?.Invoke(this, args);
-        //}
-
-        /// <inheritdoc/>
-        void IChromiumWebBrowserInternal.SetStatusMessage(string msg)
-        {
-            StatusMessage?.Invoke(this, new StatusMessageEventArgs(msg));
         }
 
         /// <inheritdoc/>
@@ -606,8 +341,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             {
                 return;
             }
-            
-           _browserHwnd = hwnd;
+
+            _browserHwnd = hwnd;
 
             Interlocked.Exchange(ref _browserInitialized, 1);
 
@@ -628,38 +363,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 _host.SetFocus(_id, true);
             }
         }
-
-        /// <summary>
-        /// A flag that indicates whether the state of the control current supports the GoBack action (true) or not (false).
-        /// </summary>
-        /// <value><c>true</c> if this instance can go back; otherwise, <c>false</c>.</value>
-        /// <remarks>In the WPF control, this property is implemented as a Dependency Property and fully supports data
-        /// binding.</remarks>
-        public bool CanGoBack
-        {
-            get { return (bool)GetValue(CanGoBackProperty); }
-        }
-
-        /// <summary>
-        /// The can go back property
-        /// </summary>
-        public static DependencyProperty CanGoBackProperty = DependencyProperty.Register(nameof(CanGoBack), typeof(bool), typeof(ChromiumWebBrowser2));
-
-        /// <summary>
-        /// A flag that indicates whether the state of the control currently supports the GoForward action (true) or not (false).
-        /// </summary>
-        /// <value><c>true</c> if this instance can go forward; otherwise, <c>false</c>.</value>
-        /// <remarks>In the WPF control, this property is implemented as a Dependency Property and fully supports data
-        /// binding.</remarks>
-        public bool CanGoForward
-        {
-            get { return (bool)GetValue(CanGoForwardProperty); }
-        }
-
-        /// <summary>
-        /// The can go forward property
-        /// </summary>
-        public static DependencyProperty CanGoForwardProperty = DependencyProperty.Register(nameof(CanGoForward), typeof(bool), typeof(ChromiumWebBrowser2));
 
         /// <summary>
         /// The address (URL) which the browser control is currently displaying.
@@ -707,7 +410,9 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 return;
             }
 
-            LoadUrl(newValue);
+            // TODO 
+            // xx
+            // LoadUrl(newValue);
         }
 
         /// <summary>
@@ -764,99 +469,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 //}, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-
-        /// <summary>
-        /// The title of the web page being currently displayed.
-        /// </summary>
-        /// <value>The title.</value>
-        /// <remarks>This property is implemented as a Dependency Property and fully supports data binding.</remarks>
-        public string Title
-        {
-            get { return (string)GetValue(TitleProperty); }
-            set { SetValue(TitleProperty, value); }
-        }
-
-        /// <summary>
-        /// The title property
-        /// </summary>
-        public static readonly DependencyProperty TitleProperty =
-            DependencyProperty.Register(nameof(Title), typeof(string), typeof(ChromiumWebBrowser2), new PropertyMetadata(null, OnTitleChanged));
-
-        /// <summary>
-        /// Event handler that will get called when the browser title changes
-        /// </summary>
-        public event DependencyPropertyChangedEventHandler TitleChanged;
-
-        /// <summary>
-        /// Handles the <see cref="E:TitleChanged" /> event.
-        /// </summary>
-        /// <param name="d">The d.</param>
-        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs"/> instance containing the event data.</param>
-        private static void OnTitleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var owner = (ChromiumWebBrowser2)d;
-
-            owner.TitleChanged?.Invoke(owner, e);
-        }
-
-        /// <summary>
-        /// The zoom level at which the browser control is currently displaying.
-        /// Can be set to 0 to clear the zoom level (resets to default zoom level).
-        /// </summary>
-        /// <value>The zoom level.</value>
-        public double ZoomLevel
-        {
-            get { return (double)GetValue(ZoomLevelProperty); }
-            set { SetValue(ZoomLevelProperty, value); }
-        }
-
-        /// <summary>
-        /// The zoom level property
-        /// </summary>
-        public static readonly DependencyProperty ZoomLevelProperty =
-            DependencyProperty.Register(nameof(ZoomLevel), typeof(double), typeof(ChromiumWebBrowser2),
-                                        new UIPropertyMetadata(0d, OnZoomLevelChanged));
-
-        /// <summary>
-        /// Handles the <see cref="E:ZoomLevelChanged" /> event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="args">The <see cref="DependencyPropertyChangedEventArgs"/> instance containing the event data.</param>
-        private static void OnZoomLevelChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
-        {
-            var owner = (ChromiumWebBrowser2)sender;
-            var oldValue = (double)args.OldValue;
-            var newValue = (double)args.NewValue;
-
-            owner.OnZoomLevelChanged(oldValue, newValue);
-        }
-
-        /// <summary>
-        /// Called when [zoom level changed].
-        /// </summary>
-        /// <param name="oldValue">The old value.</param>
-        /// <param name="newValue">The new value.</param>
-        protected virtual void OnZoomLevelChanged(double oldValue, double newValue)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Specifies the amount used to increase/decrease to ZoomLevel by
-        /// By Default this value is 0.10
-        /// </summary>
-        /// <value>The zoom level increment.</value>
-        public double ZoomLevelIncrement
-        {
-            get { return (double)GetValue(ZoomLevelIncrementProperty); }
-            set { SetValue(ZoomLevelIncrementProperty, value); }
-        }
-
-        /// <summary>
-        /// The zoom level increment property
-        /// </summary>
-        public static readonly DependencyProperty ZoomLevelIncrementProperty =
-            DependencyProperty.Register(nameof(ZoomLevelIncrement), typeof(double), typeof(ChromiumWebBrowser2), new PropertyMetadata(0.10));
 
         /// <summary>
         /// The CleanupElement controls when the Browser will be Disposed.
@@ -919,41 +531,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         }
 
         /// <summary>
-        /// The text that will be displayed as a ToolTip
-        /// </summary>
-        /// <value>The tooltip text.</value>
-        public string TooltipText
-        {
-            get { return (string)GetValue(TooltipTextProperty); }
-        }
-
-        /// <summary>
-        /// The tooltip text property
-        /// </summary>
-        public static readonly DependencyProperty TooltipTextProperty =
-            DependencyProperty.Register(nameof(TooltipText), typeof(string), typeof(ChromiumWebBrowser2));
-
-        /// <summary>
-        /// Gets or sets the WebBrowser.
-        /// </summary>
-        /// <value>The WebBrowser.</value>
-        public IChromiumWebBrowser WebBrowser
-        {
-            get { return (IChromiumWebBrowser)GetValue(WebBrowserProperty); }
-            set { SetValue(WebBrowserProperty, value); }
-        }
-
-        Dom.Frame[] IChromiumWebBrowser.Frames => throw new NotImplementedException();
-
-        Dom.Frame IChromiumWebBrowser.MainFrame => throw new NotImplementedException();
-
-        /// <summary>
-        /// The WebBrowser property
-        /// </summary>
-        public static readonly DependencyProperty WebBrowserProperty =
-            DependencyProperty.Register(nameof(WebBrowser), typeof(IChromiumWebBrowser), typeof(ChromiumWebBrowser2), new UIPropertyMetadata(defaultValue: null));
-
-        /// <summary>
         /// Runs the specific Action on the Dispatcher in an async fashion
         /// </summary>
         /// <param name="action">The action.</param>
@@ -994,39 +571,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         }
 
         /// <summary>
-        /// Zooms the browser in.
-        /// </summary>
-        private void ZoomIn()
-        {
-            UiThreadRunAsync(() =>
-            {
-                ZoomLevel = ZoomLevel + ZoomLevelIncrement;
-            });
-        }
-
-        /// <summary>
-        /// Zooms the browser out.
-        /// </summary>
-        private void ZoomOut()
-        {
-            UiThreadRunAsync(() =>
-            {
-                ZoomLevel = ZoomLevel - ZoomLevelIncrement;
-            });
-        }
-
-        /// <summary>
-        /// Reset the browser's zoom level to default.
-        /// </summary>
-        private void ZoomReset()
-        {
-            UiThreadRunAsync(() =>
-            {
-                ZoomLevel = 0;
-            });
-        }
-
-        /// <summary>
         /// Check is browserisinitialized
         /// </summary>
         /// <returns>true if browser is initialized</returns>
@@ -1058,11 +602,11 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 {
                     // For windowed browsers when the frame window is minimized set the
                     // browser window size to 0x0 to reduce resource usage.
-                 //   HideInternal();
+                    //   HideInternal();
                 }
                 else
                 {
-                   // ShowInternal(width, height);
+                    // ShowInternal(width, height);
                 }
             }
         }
@@ -1160,5 +704,197 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             throw new NotImplementedException();
         }
+
+        void IChromiumWebBrowserInternal.OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect directRect, int width, int height, IntPtr buffer)
+        {
+            const int DefaultDpi = 96;
+            var scale = DefaultDpi * 1.0;
+            IRenderHandler RenderHandler = new WritableBitmapRenderHandler(scale, scale);
+            RenderHandler.OnPaint(isPopup, directRect, buffer, width, height, this.image);
+        }
+
+        protected override void OnRender(DrawingContext drawingContext)
+        {
+            base.OnRender(drawingContext);
+
+            if (image != null)
+            {
+                drawingContext.DrawImage(image.Source, new Rect(0, 0, ActualWidth, ActualHeight));
+            }
+        }
+
+        #region wpf browser impl
+
+        /// <summary>
+        /// Invoked when an unhandled <see cref="E:System.Windows.Input.Mouse.MouseMove" /> attached event reaches an element in its route that is derived from this class. Implement this method to add class handling for this event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.Windows.Input.MouseEventArgs" /> that contains the event data.</param>
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            //Mouse, touch, and stylus will raise mouse event.
+            //For mouse events from an actual mouse, e.StylusDevice will be null.
+            //For mouse events from touch and stylus, e.StylusDevice will not be null.
+            //We only handle event from mouse here.
+            //If not, touch will cause duplicate events (mousemove and touchmove) and so does stylus.
+            //Use e.StylusDevice == null to ensure only mouse.
+            if (!e.Handled && _host != null && e.StylusDevice == null)
+            {
+                var point = e.GetPosition(this);
+                var modifiers = e.GetModifiers();
+
+                this._host.SendMouseMoveEvent(_id, (int)point.X, (int)point.Y, false, modifiers);
+            }
+
+            base.OnMouseMove(e);
+        }
+
+        /// <summary>
+        /// Invoked when an unhandled <see cref="E:System.Windows.Input.Mouse.MouseDown" /> attached event reaches an
+        /// element in its route that is derived from this class. Implement this method to add class handling for this event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.Windows.Input.MouseButtonEventArgs" /> that contains the event data.
+        /// This event data reports details about the mouse button that was pressed and the handled state.</param>
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            //Mouse, touch, and stylus will raise mouse event.
+            //For mouse events from an actual mouse, e.StylusDevice will be null.
+            //For mouse events from touch and stylus, e.StylusDevice will not be null.
+            //We only handle event from mouse here.
+            //If not, touch will cause duplicate events (mouseup and touchup) and so does stylus.
+            //Use e.StylusDevice == null to ensure only mouse.
+            if (e.StylusDevice == null)
+            {
+                Focus();
+                OnMouseButton(e);
+
+                //We should only need to capture the left button exiting the browser
+                if (e.ChangedButton == MouseButton.Left && e.LeftButton == MouseButtonState.Pressed)
+                {
+                    //Capture/Release Mouse to allow for scrolling outside bounds of browser control (#2258).
+                    //Known issue when capturing and the device has a touch screen, to workaround this issue
+                    //disable WPF StylusAndTouchSupport see for details https://github.com/dotnet/wpf/issues/1323#issuecomment-513870984
+                    CaptureMouse();
+                }
+            }
+
+            base.OnMouseDown(e);
+        }
+
+        /// <summary>
+        /// Invoked when an unhandled <see cref="E:System.Windows.Input.Mouse.MouseUp" /> routed event reaches an element in its route that is derived from this class. Implement this method to add class handling for this event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.Windows.Input.MouseButtonEventArgs" /> that contains the event data. The event data reports that the mouse button was released.</param>
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            //Mouse, touch, and stylus will raise mouse event.
+            //For mouse events from an actual mouse, e.StylusDevice will be null.
+            //For mouse events from touch and stylus, e.StylusDevice will not be null.
+            //We only handle event from mouse here.
+            //If not, touch will cause duplicate events (mouseup and touchup) and so does stylus.
+            //Use e.StylusDevice == null to ensure only mouse.
+            if (e.StylusDevice == null)
+            {
+                OnMouseButton(e);
+
+                if (e.ChangedButton == MouseButton.Left && e.LeftButton == MouseButtonState.Released)
+                {
+                    //Release the mouse capture that we grabbed on mouse down.
+                    //We won't get here if e.g. the right mouse button is pressed and released
+                    //while the left is still held, but in that case the left mouse capture seems
+                    //to be released implicitly (even without the left mouse SendMouseClickEvent in leave below)
+                    //Use ReleaseMouseCapture over Mouse.Capture(null); as it has additional Mouse.Captured == this check
+                    ReleaseMouseCapture();
+                }
+            }
+
+            base.OnMouseUp(e);
+        }
+
+        /// <summary>
+        /// Invoked when an unhandled <see cref="E:System.Windows.Input.Mouse.MouseLeave" /> attached event is raised on this element. Implement this method to add class handling for this event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.Windows.Input.MouseEventArgs" /> that contains the event data.</param>
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+            //Mouse, touch, and stylus will raise mouse event.
+            //For mouse events from an actual mouse, e.StylusDevice will be null.
+            //For mouse events from touch and stylus, e.StylusDevice will not be null.
+            //We only handle event from mouse here.
+            //OnMouseLeave event from touch or stylus needn't to be handled.
+            //Use e.StylusDevice == null to ensure only mouse.
+            if (!e.Handled && _host != null && e.StylusDevice == null)
+            {
+                var modifiers = e.GetModifiers();
+                var point = e.GetPosition(this);
+
+                _host.SendMouseMoveEvent(_id, (int)point.X, (int)point.Y, true, modifiers);
+
+                // ((IWebBrowserInternal)this).SetTooltipText(null);
+            }
+
+            base.OnMouseLeave(e);
+        }
+
+        /// <summary>
+        /// Invoked when an unhandled <see cref="E:System.Windows.Input.Mouse.LostMouseCapture" /> attached event reaches an element in
+        /// its route that is derived from this class. Implement this method to add class handling for this event.
+        /// </summary>
+        /// <param name="e">The <see cref="T:System.Windows.Input.MouseEventArgs" /> that contains event data.</param>
+        protected override void OnLostMouseCapture(MouseEventArgs e)
+        {
+            if (!e.Handled && _host != null)
+            {
+                _host.SendCaptureLostEvent(_id);
+            }
+
+            base.OnLostMouseCapture(e);
+        }
+
+        /// <summary>
+        /// Handles the <see cref="E:MouseButton" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="MouseButtonEventArgs"/> instance containing the event data.</param>
+        private void OnMouseButton(MouseButtonEventArgs e)
+        {
+            if (!e.Handled && _host != null)
+            {
+                var modifiers = e.GetModifiers();
+                var mouseUp = (e.ButtonState == MouseButtonState.Released);
+                var point = e.GetPosition(this);
+
+                ////if (e.ChangedButton == MouseButton.XButton1)
+                ////{
+                ////    if (CanGoBack && mouseUp)
+                ////    {
+                ////        this.Back();
+                ////    }
+                ////}
+                ////else if (e.ChangedButton == MouseButton.XButton2)
+                ////{
+                ////    if (CanGoForward && mouseUp)
+                ////    {
+                ////        this.Forward();
+                ////    }
+                ////}
+                ////else
+                {
+                    //Chromium only supports values of 1, 2 or 3.
+                    //https://github.com/cefsharp/CefSharp/issues/3940
+                    //Anything greater than 3 then we send click count of 1
+                    var clickCount = e.ClickCount;
+
+                    if (clickCount > 3)
+                    {
+                        clickCount = 1;
+                    }
+
+                    _host.SendMouseClickEvent(_id, (int)point.X, (int)point.Y, (MouseButtonType)e.ChangedButton, mouseUp, clickCount, modifiers);
+                }
+
+                e.Handled = true;
+            }
+        }
+
+        #endregion
     }
 }

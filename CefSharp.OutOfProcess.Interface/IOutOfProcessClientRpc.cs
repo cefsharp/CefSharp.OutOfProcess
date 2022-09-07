@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Copy.CefSharp;
+using System;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
@@ -51,5 +52,12 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
         void SetFocus(int browserId, bool focus);
+
+
+        void SendCaptureLostEvent(int browserId);
+
+        void SendMouseClickEvent(int browserId, int X, int Y, MouseButtonType changedButton, bool mouseUp, int clickCount, CefEventFlags modifiers);
+
+        void SendMouseMoveEvent(int browserId, int X, int Y, bool mouseLeave, CefEventFlags modifiers);
     }
 }

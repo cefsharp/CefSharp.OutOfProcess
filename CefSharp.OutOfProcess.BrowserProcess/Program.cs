@@ -13,18 +13,20 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         [STAThread]
         public static int Main(string[] args)
         {
-            File.AppendAllText("00mylog.txt", "foo started");
+            File.AppendAllText("00mylog.txt", "#0 ");
 
             Cef.EnableHighDPISupport();
 
+            File.AppendAllText("00mylog.txt", "#00  ");
+
             Debugger.Launch();
 
-            File.AppendAllText("00mylog.txt", "foo starte´d");
+            File.AppendAllText("00mylog.txt", "#1 ");
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
             var cachePath = CommandLineArgsParser.GetArgumentValue(args, "--cachePath");
 
-            File.AppendAllText("00mylog.txt", $"foo starte´d {parentProcessId} - {cachePath}");
+            File.AppendAllText("00mylog.txt", $"#2 -foo starte´d {parentProcessId} - {cachePath}");
 
             var parentProcess = Process.GetProcessById(parentProcessId);
 
@@ -38,12 +40,17 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var browserProcessHandler = new BrowserProcessHandler(parentProcessId);
 
+            File.AppendAllText("00mylog.txt", $"#4 before closed ");
+
             Cef.EnableWaitForBrowsersToClose();
+
+            File.AppendAllText("00mylog.txt", $"#5 closed ");
 
             var success = Cef.Initialize(settings, performDependencyCheck:true, browserProcessHandler: browserProcessHandler);
 
             if(!success)
             {
+                File.AppendAllText("00mylog.txt", $"#6 initialize failed ");
                 return 1;
             }
 

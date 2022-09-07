@@ -3,15 +3,10 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
-using CefSharp.Callback;
-using System.IO;
 using CefSharp.OutOfProcess.Interface;
-using System.Runtime.InteropServices;
-using PInvoke;
 using System.Diagnostics;
 using CefSharp.Structs;
 using CefSharp.Enums;
-using static PInvoke.User32;
 using CefSharp.Wpf.Internals;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
@@ -27,9 +22,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
 
         public const uint WS_EX_NOACTIVATE = 0x08000000;
-
-        private IDevToolsMessageObserver _devtoolsMessageObserver;
-        private IRegistration _devtoolsRegistration;
 
         /// <summary>
         /// Internal ID used for tracking browsers between Processes;
@@ -302,8 +294,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnStatusMessage(StatusMessageEventArgs args)
         {
             StatusMessage?.Invoke(this, args);
-
-            _outofProcessHostRpc.NotifyStatusMessage(_id, args.Value);
         }
 
         /// <summary>
@@ -348,41 +338,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var host = browser.GetHost();
             _outofProcessHostRpc.NotifyBrowserCreated(_id, host.GetWindowHandle());
-
-            var observer = new CefSharpDevMessageObserver();
-            observer.OnDevToolsAgentDetached((b) =>
-            {
-                _outofProcessHostRpc.NotifyDevToolsAgentDetached(_id);
-            });
-            observer.OnDevToolsMessage((b, m) =>
-            {
-                using var reader = new StreamReader(m);
-                var msg = reader.ReadToEnd();
-
-                _outofProcessHostRpc.NotifyDevToolsMessage(_id, msg);
-            });
-
-            _devtoolsMessageObserver = observer;
-
-            _devtoolsRegistration = host.AddDevToolsMessageObserver(_devtoolsMessageObserver);
-
-            var devToolsClient = browser.GetDevToolsClient();
-
-            //TODO: Do we need perforamnce and Log enabled?
-            var devToolsEnableTask = Task.WhenAll(devToolsClient.Page.EnableAsync(),
-                devToolsClient.Page.SetLifecycleEventsEnabledAsync(true),
-                devToolsClient.Runtime.EnableAsync(),
-                devToolsClient.Network.EnableAsync(),
-                devToolsClient.Performance.EnableAsync(),
-                devToolsClient.Log.EnableAsync());
-
-            _ = devToolsEnableTask.ContinueWith(t =>
-            {
-                ((IDisposable)devToolsClient).Dispose();
-
-                _outofProcessHostRpc.NotifyDevToolsReady(_id);
-
-            }, TaskScheduler.Default);
 
 
             { // copied from WPF createbrowser
@@ -671,11 +626,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             if (disposing)
             {
-                _devtoolsRegistration?.Dispose();
-                _devtoolsRegistration = null;
-                _devtoolsMessageObserver?.Dispose();
-                _devtoolsMessageObserver = null;
-
                 CanExecuteJavascriptInMainFrame = false;
                 Interlocked.Exchange(ref _browserInitialized, 0);
 
@@ -825,8 +775,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.SetTitle(TitleChangedEventArgs args)
         {
             TitleChanged?.Invoke(this, args);
-
-            _outofProcessHostRpc.NotifyTitleChanged(_id, args.Title);
         }
 
         /// <summary>
@@ -900,10 +848,10 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             throw new NotImplementedException();
         }
 
-        void IRenderWebBrowser.OnPaint(PaintElementType type, Rect dirtyRect, IntPtr buffer, int width, int height)
+        void IRenderWebBrowser.OnPaint(PaintElementType type, Structs.Rect dirtyRect, IntPtr buffer, int width, int height)
         {
-            // _outofProcessHostRpc.Paint(); // TODO paint to context
-            throw new NotImplementedException();
+            var dirtyRectCopy = new Copy.CefSharp.Structs.Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height);
+            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, buffer);
         }
 
         void IRenderWebBrowser.OnCursorChange(IntPtr cursor, CursorType type, CursorInfo customCursorInfo)

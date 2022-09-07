@@ -120,5 +120,26 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             browser?.GetBrowserHost().SetFocus(focus);
         }
+
+        void IOutOfProcessClientRpc.SendCaptureLostEvent(int browserId)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            browser?.GetBrowserHost().SendCaptureLostEvent();
+        }
+
+        void IOutOfProcessClientRpc.SendMouseClickEvent(int browserId, int X, int Y, Copy.CefSharp.MouseButtonType changedButton, bool mouseUp, int clickCount, Copy.CefSharp.CefEventFlags modifiers)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            browser?.GetBrowserHost().SendMouseClickEvent(X, Y, (MouseButtonType)changedButton, mouseUp, clickCount, (CefEventFlags)modifiers);
+        }
+
+        void IOutOfProcessClientRpc.SendMouseMoveEvent(int browserId, int X, int Y, bool mouseLeave, Copy.CefSharp.CefEventFlags modifiers)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            browser?.GetBrowserHost().SendMouseMoveEvent(X,Y,mouseLeave, (CefEventFlags)modifiers);
+        }
     }
 }
