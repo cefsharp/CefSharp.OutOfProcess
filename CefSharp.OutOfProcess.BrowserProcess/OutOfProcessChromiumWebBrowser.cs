@@ -62,11 +62,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         private int _disposeSignaled;
 
         /// <summary>
-        /// The browser
-        /// </summary>
-        private IBrowser _browser;
-
-        /// <summary>
         /// Id
         /// </summary>
         public int Id => _id;
@@ -334,24 +329,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 return;
             }
 
-            _browser = browser;
             BrowserCore = browser;
             Interlocked.Exchange(ref _browserInitialized, 1);
 
             var host = browser.GetHost();
             _outofProcessHostRpc.NotifyBrowserCreated(_id, host.GetWindowHandle());
-
-
-            { // copied from WPF createbrowser
-
-                using (var frame = browser.MainFrame)
-                {
-                    frame.LoadUrl("www.sz.de");
-                }
-
-                host.WasResized();
-                host.Invalidate(PaintElementType.View);
-            };
         }
 
         /// <summary>
@@ -416,7 +398,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfDisposed();
             ThrowExceptionIfBrowserNotInitialized();
 
-            using (var devToolsClient = _browser.GetDevToolsClient())
+            using (var devToolsClient = BrowserCore.GetDevToolsClient())
             {
                 //Get the content size
                 var layoutMetricsResponse = await devToolsClient.Page.GetLayoutMetricsAsync().ConfigureAwait(continueOnCapturedContext: false);
@@ -650,7 +632,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 FocusHandler = new NoFocusHandler();
 
-                _browser = null;
                 BrowserCore = null;
 
                 _managedCefBrowserAdapter?.Dispose();
@@ -754,7 +735,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfDisposed();
             ThrowExceptionIfBrowserNotInitialized();
 
-            return _browser;
+            return BrowserCore;
         }
 
         /// <summary>
@@ -856,7 +837,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             // PixelFormat PixelFormat = PixelFormats.Pbgra32;
             int BytesPerPixel = 32 / 8;
-            int pixels = width * height;
+            int pixels = 3600 * 2000;// width * height;
             int numberOfBytes = pixels * BytesPerPixel;
 
             bool createNewBitmap = mappedFile == null || currentSize.Height != height || currentSize.Width != width;
@@ -870,27 +851,30 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 {
                     ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
 
-                    mappedFile = MemoryMappedFile.CreateOrOpen("mytodo", numberOfBytes, MemoryMappedFileAccess.ReadWrite);
+                    mappedFile = MemoryMappedFile.CreateNew("mytodo", numberOfBytes, MemoryMappedFileAccess.ReadWrite);
 
-                    viewAccessor = mappedFile.CreateViewAccessor();
+                    viewAccessor = mappedFile.CreateViewAccessor(0, numberOfBytes, MemoryMappedFileAccess.Write);
                 }
 
                 currentSize = new Size(width, height);
             }
 
-            try
+            var myhandle = viewAccessor.SafeMemoryMappedViewHandle;
+            if (myhandle.IsClosed || myhandle.IsInvalid)
             {
-                byte[] bytes = new byte[numberOfBytes];
-                Marshal.Copy(buffer, bytes, 0, numberOfBytes);
-              //  NativeMethodWrapper.MemoryCopy(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, numberOfBytes);
+                return;
+            }
 
-                _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, bytes); // TODO
-            }
-            catch (Exception e)
-            {
-                ;
-            }
+            var usedBytes = width * height * BytesPerPixel;
+
+            CopyMemory(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, (uint)usedBytes);
+            viewAccessor.Flush();
+            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, null);
         }
+
+        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
+        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
+
 
         protected void ReleaseMemoryMappedView(ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor stream)
         {
@@ -943,7 +927,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         void IRenderWebBrowser.OnVirtualKeyboardRequested(IBrowser browser, TextInputMode inputMode)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
     }
 }

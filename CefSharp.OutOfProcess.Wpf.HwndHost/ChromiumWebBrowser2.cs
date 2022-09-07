@@ -412,9 +412,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                 return;
             }
 
-            // TODO 
-            // xx
-            // LoadUrl(newValue);
+            _host.LoadUrl(_id, newValue);
         }
 
         /// <summary>

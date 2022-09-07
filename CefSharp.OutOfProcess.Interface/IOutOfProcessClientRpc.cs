@@ -1,6 +1,5 @@
 ﻿using Copy.CefSharp;
 using System;
-using System.Drawing;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
@@ -16,14 +15,6 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="browserId">browser Id</param>
         /// <returns>Task</returns>
         Task CloseBrowser(int browserId);
-
-        /// <summary>
-        /// Send DevTools message
-        /// </summary>
-        /// <param name="browserId">browser Id</param>
-        /// <param name="message"devtools message (json)></param>
-        /// <returns>Task</returns>
-        Task SendDevToolsMessage(int browserId, string message);
 
         /// <summary>
         /// Close the Browser Process (host)
@@ -53,6 +44,8 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
         void SetFocus(int browserId, bool focus);
+
+        void LoadUrl(int browserId, string address);
 
 
         void SendCaptureLostEvent(int browserId);

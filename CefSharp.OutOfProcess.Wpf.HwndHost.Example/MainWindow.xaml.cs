@@ -28,6 +28,12 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
             InitializeComponent();
 
             Loaded += OnMainWindowLoaded;
+            txtBoxAddress.TextChanged += TxtBoxAddress_TextChanged;
+        }
+
+        private void TxtBoxAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            ((ChromiumWebBrowser2)BrowserContentPresenter.Content).Address = txtBoxAddress.Text;
         }
 
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)

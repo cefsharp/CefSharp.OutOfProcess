@@ -65,18 +65,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
-        Task IOutOfProcessClientRpc.SendDevToolsMessage(int browserId, string message)
-        {
-            return CefThread.ExecuteOnUiThread(() =>
-            {
-                var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-                browser?.GetBrowserHost().SendDevToolsMessage(message);
-
-                return true;
-            });
-        }
-
         Task IOutOfProcessClientRpc.CloseHost()
         {
             return CefThread.ExecuteOnUiThread(() =>
@@ -112,6 +100,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
 
             browser?.GetBrowserHost().SetFocus(focus);
+        }
+
+        void IOutOfProcessClientRpc.LoadUrl(int browserId, string address)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+            browser?.BrowserCore.MainFrame.LoadUrl(address);
         }
 
         void IOutOfProcessClientRpc.SendCaptureLostEvent(int browserId)

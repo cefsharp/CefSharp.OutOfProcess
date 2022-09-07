@@ -96,11 +96,6 @@ namespace CefSharp.OutOfProcess
             return _browsers.TryAdd(id, browser);
         }
 
-        internal Task SendDevToolsMessageAsync(int browserId, string message)
-        {
-            return _outOfProcessClient.SendDevToolsMessage(browserId, message);
-        }
-
         private Task<OutOfProcessHost> InitializedTask
         {
             get { return _processInitialized.Task; }
@@ -170,20 +165,16 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        public void NotifyMoveOrResizeStarted(int id, int width, int height, int screenX, int screenY)
-        {
-            _outOfProcessClient.NotifyMoveOrResizeStarted(id, width, height, screenX, screenY);
-        }
+        public void NotifyMoveOrResizeStarted(int id, int width, int height, int screenX, int screenY) => _outOfProcessClient.NotifyMoveOrResizeStarted(id, width, height, screenX, screenY);
+
+        public void LoadUrl(int id, string url) => _outOfProcessClient.LoadUrl(id, url);
 
         /// <summary>
         /// Set whether the browser is focused. (Used for Normal Rendering e.g. WinForms)
         /// </summary>
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
-        public void SetFocus(int id, bool focus)
-        {
-            _outOfProcessClient.SetFocus(id, focus);
-        }
+        public void SetFocus(int id, bool focus) => _outOfProcessClient.SetFocus(id, focus);
 
         public void CloseBrowser(int id)
         {
