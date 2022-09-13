@@ -19,6 +19,8 @@ using Copy.CefSharp;
 using Application = System.Windows.Application;
 using CefSharp.Wpf;
 using System.Threading.Tasks;
+using CefSharp.Dom;
+using CefSharp.OutOfProcess.Core;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost
 {
@@ -48,6 +50,9 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
         private OutOfProcessHost _host;
         private IntPtr _browserHwnd = IntPtr.Zero;
+
+        private OutOfProcessConnectionTransport _devToolsContextConnectionTransport;
+        private IDevToolsContext _devToolsContext;
         private int _id;
         private bool _devToolsReady;
 
@@ -126,47 +131,130 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// <inheritdoc/>
         public event EventHandler<StatusMessageEventArgs> StatusMessage;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ChromiumWebBrowser2"/> instance.
-        /// </summary>
-        /// <param name="host">Out of process host</param>
-        /// <param name="initialAddress">address to load initially</param>
-        public ChromiumWebBrowser2(OutOfProcessHost host, string initialAddress = null)
+        /// <inheritdoc/>
+        internal event EventHandler DevToolsContextAvailable;
+
+        public static string Path { get; set; }
+        public static string CachePath { get; set; }
+        public ChromiumWebBrowser2()
         {
-            if (host == null)
-            {
-                throw new ArgumentNullException(nameof(host));
-            }
-
-            _host = host;
-            _initialAddress = initialAddress;
-
             Focusable = true;
             FocusVisualStyle = null;
 
+
+
+            UseLayoutRounding = true;
+
+            Initialize();
+        }
+
+        async void Initialize()
+        {
             SizeChanged += OnSizeChanged;
             IsVisibleChanged += OnIsVisibleChanged;
 
             PresentationSource.AddSourceChangedHandler(this, PresentationSourceChangedHandler);
 
-            UseLayoutRounding = true;
+            _host = await OutOfProcessHost.CreateAsync(Path, CachePath);
+            _hwndHost = new WindowInteropHelper(Application.Current.MainWindow).Handle;
+            _host.CreateBrowser(this, _hwndHost, url: Address, out _id);
+            _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
-            {// copied from method build window core
-                _hwndHost = new WindowInteropHelper(Application.Current.MainWindow).Handle; // new line
-                _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
+            var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
+
+            // TODO this fixes exception, maybe because of symbol laoding
+            await Task.Delay(1000);
+            _devToolsContext = Dom.DevToolsContext.CreateForOutOfProcess(connection);
+
+            if(preReady)
+            {
+                InitializeDevContextReady();
             }
         }
 
 
         /// <inheritdoc/>
-        int IChromiumWebBrowserInternal.Id
+        int IChromiumWebBrowserInternal.Id => _id;
+
+        /// <summary>
+        /// DevToolsContext - provides communication with the underlying browser
+        /// </summary>
+        public IDevToolsContext DevToolsContext
         {
-            get { return _id; }
+            get
+            {
+                if (_devToolsReady)
+                {
+                    return _devToolsContext;
+                }
+
+                return default;
+            }
         }
 
         /// <inheritdoc/>
         public bool IsBrowserInitialized => _browserHwnd != IntPtr.Zero;
 
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.OnDevToolsMessage(string jsonMsg)
+        {
+            _devToolsContextConnectionTransport?.InvokeMessageReceived(jsonMsg);
+        }
+
+        private bool preReady;
+        /// <inheritdoc/>
+        void IChromiumWebBrowserInternal.OnDevToolsReady()
+        {
+
+
+            if (_devToolsContext == null)
+            {
+                preReady = true;
+                return;
+            }
+
+            InitializeDevContextReady();
+        }
+
+        private void InitializeDevContextReady()
+        {
+            var ctx = (DevToolsContext)_devToolsContext;
+
+            ////////TODO
+            ////////ctx.DOMContentLoaded += DOMContentLoaded;
+            ////////ctx.Error += BrowserProcessCrashed;
+            ////////ctx.FrameAttached += FrameAttached;
+            ////////ctx.FrameDetached += FrameDetached;
+            ////////ctx.FrameNavigated += FrameNavigated;
+            ////////ctx.Load += JavaScriptLoad;
+            ////////ctx.PageError += RuntimeExceptionThrown;
+            ////////ctx.Popup += Popup;
+            ////////ctx.Request += NetworkRequest;
+            ////////ctx.RequestFailed += NetworkRequestFailed;
+            ////////ctx.RequestFinished += NetworkRequestFinished;
+            ////////ctx.RequestServedFromCache += NetworkRequestServedFromCache;
+            ////////ctx.Response += NetworkResponse;
+            ////////ctx.Console += ConsoleMessage;
+            ////////ctx.LifecycleEvent += LifecycleEvent;
+
+            _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
+            {
+                _devToolsReady = true;
+
+                DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
+
+                //NOW the user can start using the devtools context
+            }, TaskScheduler.Current);
+
+            ////UiThreadRunAsync(() =>
+            ////{
+            ////    // Only call Load if initialAddress is null and Address is not empty
+            ////    if (string.IsNullOrEmpty(_initialAddress) && !string.IsNullOrEmpty(Address))
+            ////    {
+            ////        _host.LoadUrl(_id, Address);
+            ////    }
+            ////});
+        }
 
         private void PresentationSourceChangedHandler(object sender, SourceChangedEventArgs args)
         {
@@ -718,7 +806,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             if (!e.Handled && _host != null && e.StylusDevice == null)
             {
                 var point = e.GetPosition(this);
-                var modifiers = e.GetModifiers();
+                Copy.CefSharp.CefEventFlags modifiers = (Copy.CefSharp.CefEventFlags)e.GetModifiers();
 
                 this._host.SendMouseMoveEvent(_id, (int)point.X, (int)point.Y, false, modifiers);
             }
@@ -802,7 +890,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             //Use e.StylusDevice == null to ensure only mouse.
             if (!e.Handled && _host != null && e.StylusDevice == null)
             {
-                var modifiers = e.GetModifiers();
+                Copy.CefSharp.CefEventFlags modifiers = (Copy.CefSharp.CefEventFlags)e.GetModifiers();
                 var point = e.GetPosition(this);
 
                 _host.SendMouseMoveEvent(_id, (int)point.X, (int)point.Y, true, modifiers);
@@ -836,7 +924,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             if (!e.Handled && _host != null)
             {
-                var modifiers = e.GetModifiers();
+                Copy.CefSharp.CefEventFlags modifiers = (Copy.CefSharp.CefEventFlags)e.GetModifiers();
                 var mouseUp = (e.ButtonState == MouseButtonState.Released);
                 var point = e.GetPosition(this);
 
@@ -866,7 +954,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                         clickCount = 1;
                     }
 
-                    _host.SendMouseClickEvent(_id, (int)point.X, (int)point.Y, (MouseButtonType)e.ChangedButton, mouseUp, clickCount, modifiers);
+                    _host.SendMouseClickEvent(_id, (int)point.X, (int)point.Y, (Copy.CefSharp.MouseButtonType)e.ChangedButton, mouseUp, clickCount, modifiers);
                 }
 
                 e.Handled = true;

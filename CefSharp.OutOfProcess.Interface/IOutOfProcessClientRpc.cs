@@ -17,6 +17,14 @@ namespace CefSharp.OutOfProcess.Interface
         Task CloseBrowser(int browserId);
 
         /// <summary>
+        /// Send DevTools message
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        /// <param name="message"devtools message (json)></param>
+        /// <returns>Task</returns>
+        Task SendDevToolsMessage(int browserId, string message);
+
+        /// <summary>
         /// Close the Browser Process (host)
         /// </summary>
         /// <returns>Task</returns>

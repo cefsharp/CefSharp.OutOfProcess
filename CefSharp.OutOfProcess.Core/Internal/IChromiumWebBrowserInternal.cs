@@ -10,6 +10,11 @@ namespace CefSharp.OutOfProcess.Internal
         /// </summary>
         int Id { get; }
 
+        void OnDevToolsMessage(string jsonMsg);
+
+        /// <inheritdoc/>
+        void OnDevToolsReady();
+
         /// <summary>
         /// Set the browser Hwnd
         /// </summary>

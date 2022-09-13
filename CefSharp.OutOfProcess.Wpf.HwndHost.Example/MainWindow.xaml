@@ -39,8 +39,9 @@
             </TextBox>
         </Grid>
         <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1">
-            <ContentPresenter x:Name="BrowserContentPresenter" />
-            <!--<hwndhost:ChromiumWebBrowser x:Name="Browser"
+            <hwndhost:TcWebBrowser x:Name="tcbrowser" Address="http://www.google.de" />
+            <!--<ContentPresenter x:Name="BrowserContentPresenter" />
+            --><!--<hwndhost:ChromiumWebBrowser x:Name="Browser"
                                     Address="https://www.google.com">
                 <behaviors:Interaction.Behaviors>
                     <behaviours:HoverLinkBehaviour x:Name="HoverLinkBehaviour"/>

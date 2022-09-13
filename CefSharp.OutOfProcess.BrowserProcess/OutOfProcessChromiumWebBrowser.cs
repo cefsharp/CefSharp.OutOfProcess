@@ -10,7 +10,8 @@ using CefSharp.Enums;
 using CefSharp.Wpf.Internals;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
-using System.Net;
+using System.IO;
+using CefSharp.Callback;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -25,6 +26,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             "the IsBrowserInitialized property to determine when the browser has been initialized.";
 
         public const uint WS_EX_NOACTIVATE = 0x08000000;
+
+        private IDevToolsMessageObserver _devtoolsMessageObserver;
+        private IRegistration _devtoolsRegistration;
 
         /// <summary>
         /// Internal ID used for tracking browsers between Processes;
@@ -337,6 +341,42 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var host = browser.GetHost();
             _outofProcessHostRpc.NotifyBrowserCreated(_id, host.GetWindowHandle());
+
+            var observer = new CefSharpDevMessageObserver();
+            observer.OnDevToolsAgentDetached((b) =>
+            {
+                _outofProcessHostRpc.NotifyDevToolsAgentDetached(_id);
+            });
+            observer.OnDevToolsMessage((b, m) =>
+            {
+                using var reader = new StreamReader(m);
+                var msg = reader.ReadToEnd();
+
+                _outofProcessHostRpc.NotifyDevToolsMessage(_id, msg);
+            });
+
+            _devtoolsMessageObserver = observer;
+
+            _devtoolsRegistration = host.AddDevToolsMessageObserver(_devtoolsMessageObserver);
+
+            var devToolsClient = browser.GetDevToolsClient();
+
+            //TODO: Do we need perforamnce and Log enabled?
+            var devToolsEnableTask = Task.WhenAll(
+                devToolsClient.Page.EnableAsync(),
+                devToolsClient.Page.SetLifecycleEventsEnabledAsync(true),
+                devToolsClient.Runtime.EnableAsync(),
+                devToolsClient.Network.EnableAsync(),
+                devToolsClient.Performance.EnableAsync(),
+                devToolsClient.Log.EnableAsync());
+
+            _ = devToolsEnableTask.ContinueWith(t =>
+            {
+                ((IDisposable)devToolsClient).Dispose();
+
+                _outofProcessHostRpc.NotifyDevToolsReady(_id);
+
+            }, TaskScheduler.Default);            
         }
 
         /// <summary>
@@ -610,6 +650,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             if (disposing)
             {
+                _devtoolsRegistration?.Dispose();
+                _devtoolsRegistration = null;
+                _devtoolsMessageObserver?.Dispose();
+                _devtoolsMessageObserver = null;
+
                 CanExecuteJavascriptInMainFrame = false;
                 Interlocked.Exchange(ref _browserInitialized, 0);
 

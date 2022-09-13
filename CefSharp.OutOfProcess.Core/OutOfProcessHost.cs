@@ -96,6 +96,11 @@ namespace CefSharp.OutOfProcess
             return _browsers.TryAdd(id, browser);
         }
 
+        internal Task SendDevToolsMessageAsync(int browserId, string message)
+        {
+            return _outOfProcessClient.SendDevToolsMessage(browserId, message);
+        }
+
         private Task<OutOfProcessHost> InitializedTask
         {
             get { return _processInitialized.Task; }
@@ -155,6 +160,30 @@ namespace CefSharp.OutOfProcess
             _chromiumVersion = chromiumVersion;
 
             _processInitialized.TrySetResult(this);
+        }
+
+        void IOutOfProcessHostRpc.NotifyDevToolsAgentDetached(int browserId)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+
+            }
+        }
+
+        void IOutOfProcessHostRpc.NotifyDevToolsMessage(int browserId, string devToolsMessage)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.OnDevToolsMessage(devToolsMessage);
+            }
+        }
+
+        void IOutOfProcessHostRpc.NotifyDevToolsReady(int browserId)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.OnDevToolsReady();
+            }
         }
 
         void IOutOfProcessHostRpc.NotifyLoadingStateChange(int browserId, bool canGoBack, bool canGoForward, bool isLoading)
@@ -217,14 +246,14 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        public void SendMouseMoveEvent(int browserId, int x, int y, bool mouseLeave, CefEventFlags modifiers) => _outOfProcessClient.SendMouseMoveEvent(browserId, x, y, mouseLeave, modifiers);
+        public void SendMouseMoveEvent(int browserId, int x, int y, bool mouseLeave, CefEventFlags modifiers) 
+            => _outOfProcessClient.SendMouseMoveEvent(browserId, x, y, mouseLeave, modifiers);
 
-        public void SendCaptureLostEvent(int browserId) => _outOfProcessClient.SendCaptureLostEvent(browserId);
+        public void SendCaptureLostEvent(int browserId) 
+            => _outOfProcessClient.SendCaptureLostEvent(browserId);
 
-        public void SendMouseClickEvent(int browserId, int x, int y, MouseButtonType changedButton, bool mouseUp, int clickCount, CefEventFlags modifiers)
-        {
-            _outOfProcessClient.SendMouseClickEvent(browserId, x, y, changedButton, mouseUp, clickCount, modifiers);
-        }
+        public void SendMouseClickEvent(int browserId, int x, int y, MouseButtonType changedButton, bool mouseUp, int clickCount, CefEventFlags modifiers) 
+            => _outOfProcessClient.SendMouseClickEvent(browserId, x, y, changedButton, mouseUp, clickCount, modifiers);
 
         public IOutOfProcessClientRpc Client() => _outOfProcessClient;
 

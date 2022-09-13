@@ -65,6 +65,17 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
+        Task IOutOfProcessClientRpc.SendDevToolsMessage(int browserId, string message)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+            return CefThread.ExecuteOnUiThread(() =>
+            {
+                browser?.GetBrowserHost().SendDevToolsMessage(message);
+
+                return true;
+            });
+        }
+
         Task IOutOfProcessClientRpc.CloseHost()
         {
             return CefThread.ExecuteOnUiThread(() =>

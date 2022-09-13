@@ -21,34 +21,31 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
         private string _targetFramework = "net462";
 #endif
 
-        private OutOfProcessHost _outOfProcessHost;
+      //  private OutOfProcessHost _outOfProcessHost;
 
         public MainWindow()
         {
+            var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
+            ChromiumWebBrowser2.Path = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
+            ChromiumWebBrowser2.CachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
+
             InitializeComponent();
 
-            Loaded += OnMainWindowLoaded;
+         //   Loaded += OnMainWindowLoaded;
             txtBoxAddress.TextChanged += TxtBoxAddress_TextChanged;
         }
 
         private void TxtBoxAddress_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
-            ((ChromiumWebBrowser2)BrowserContentPresenter.Content).Address = txtBoxAddress.Text;
+            tcbrowser.Address = txtBoxAddress.Text;
+           // ((ChromiumWebBrowser2)BrowserContentPresenter.Content).Address = txtBoxAddress.Text;
         }
 
         private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
-            var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
-            outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
-            var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
-            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
+         //   _outOfProcessHost = await OutOfProcessHost.CreateAsync(ChromiumWebBrowser2.Path, ChromiumWebBrowser2.CachePath);
 
-            BrowserContentPresenter.Content = new ChromiumWebBrowser2(_outOfProcessHost, "https://google.com");
-        }
-
-        private void ShowDevToolsClick(object sender, RoutedEventArgs e)
-        {
-            
+         //   BrowserContentPresenter.Content = new ChromiumWebBrowser2(_outOfProcessHost, "https://google.com");
         }
     }
 }

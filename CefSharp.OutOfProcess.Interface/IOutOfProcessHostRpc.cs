@@ -19,6 +19,25 @@ namespace CefSharp.OutOfProcess.Interface
         void NotifyBrowserCreated(int browserId, IntPtr browserHwnd);
 
         /// <summary>
+        /// DevTools agent was attached for the specified browser
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        void NotifyDevToolsAgentDetached(int browserId);
+
+        /// <summary>
+        /// DevTools message was received from the specified browser
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        /// <param name="devToolsMessage">devtools message (json)</param>
+        void NotifyDevToolsMessage(int browserId, string devToolsMessage);
+
+        /// <summary>
+        /// DevTools is ready for the specified browser
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        void NotifyDevToolsReady(int browserId);
+
+        /// <summary>
         /// Adress changed for the specified browser
         /// </summary>
         /// <param name="browserId">browser Id</param>

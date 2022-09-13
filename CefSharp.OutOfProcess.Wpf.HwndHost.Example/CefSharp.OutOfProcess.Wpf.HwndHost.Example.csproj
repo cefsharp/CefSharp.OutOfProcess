@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <UseWPF>true</UseWPF>
-    <TargetFrameworks>net462</TargetFrameworks>
+    <TargetFrameworks>net472</TargetFrameworks>
     <RootNamespace>CefSharp.OutOfProcess.Wpf.HwndHost.Example</RootNamespace>
     <StartupObject>CefSharp.OutOfProcess.Wpf.HwndHost.Example.App</StartupObject>
     <PlatformTarget>AnyCPU</PlatformTarget>
