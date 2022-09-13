@@ -42,42 +42,27 @@ namespace CefSharp.OutOfProcess
         /// <summary>
         /// UI Thread assocuated with this <see cref="OutOfProcessHost"/>
         /// </summary>
-        public int UiThreadId
-        {
-            get { return _uiThreadId; }
-        }
+        public int UiThreadId => _uiThreadId;
 
         /// <summary>
         /// Thread Id of the UI Thread running in the Browser Process
         /// </summary>
-        public int RemoteUiThreadId
-        {
-            get { return _remoteuiThreadId; }
-        }
+        public int RemoteUiThreadId => _remoteuiThreadId;
 
         /// <summary>
         /// CefSharp Version
         /// </summary>
-        public string CefSharpVersion
-        {
-            get { return _cefSharpVersion; }
-        }
+        public string CefSharpVersion => _cefSharpVersion;
 
         /// <summary>
         /// Cef Version
         /// </summary>
-        public string CefVersion
-        {
-            get { return _cefVersion; }
-        }
+        public string CefVersion => _cefVersion;
 
         /// <summary>
         /// Chromium Version
         /// </summary>
-        public string ChromiumVersion
-        {
-            get { return _chromiumVersion; }
-        }
+        public string ChromiumVersion => _chromiumVersion;
 
         /// <summary>
         /// Sends an IPC message to the Browser Process instructing it
@@ -101,10 +86,7 @@ namespace CefSharp.OutOfProcess
             return _outOfProcessClient.SendDevToolsMessage(browserId, message);
         }
 
-        private Task<OutOfProcessHost> InitializedTask
-        {
-            get { return _processInitialized.Task; }
-        }
+        private Task<OutOfProcessHost> InitializedTask => _processInitialized.Task;
 
         private void Init()
         {
