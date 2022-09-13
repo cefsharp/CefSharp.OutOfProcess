@@ -1,14 +1,17 @@
 ﻿using CefSharp.Dom.Transport;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Core
 {
     public class OutOfProcessConnectionTransport : IConnectionTransport
     {
-        public int BrowserId { get; }
         public bool IsClosed { get; private set; }
-        public OutOfProcessHost OutOfProcessHost { get; }
+
+        private int BrowserId { get; }
+
+        private OutOfProcessHost OutOfProcessHost { get; }
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<MessageErrorEventArgs> MessageError;
@@ -27,15 +30,17 @@ namespace CefSharp.OutOfProcess.Core
 
         public void InvokeMessageReceived(string message)
         {
+            Debug.WriteLine("<  " + message);
             MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
         }
 
-        public Task SendAsync(string message)
+        Task IConnectionTransport.SendAsync(string message)
         {
+            Debug.WriteLine(">>" + message);
             return OutOfProcessHost.SendDevToolsMessageAsync(BrowserId, message);
         }
 
-        public void StopReading()
+        void IConnectionTransport.StopReading()
         {
             ;
         }

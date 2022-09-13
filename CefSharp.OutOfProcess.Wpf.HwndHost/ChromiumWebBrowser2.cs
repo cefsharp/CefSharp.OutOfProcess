@@ -152,17 +152,17 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
             _host = await OutOfProcessHost.CreateAsync(Path, CachePath);
             _hwndHost = new WindowInteropHelper(Application.Current.MainWindow).Handle;
+
             _host.CreateBrowser(this, _hwndHost, url: Address, out _id);
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
             var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
-
-            // TODO this fixes exception, maybe because of symbol laoding
-            await Task.Delay(1000);
             _devToolsContext = Dom.DevToolsContext.CreateForOutOfProcess(connection);
 
-            if(preReady)
+            if (preReady)
             {
+                // TODO this fixes exception, maybe because of symbol laoding
+                await Task.Delay(1000);
                 InitializeDevContextReady();
             }
         }
