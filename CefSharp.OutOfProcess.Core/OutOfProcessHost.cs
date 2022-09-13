@@ -246,13 +246,13 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        public void SendMouseMoveEvent(int browserId, int x, int y, bool mouseLeave, CefEventFlags modifiers) 
+        public void SendMouseMoveEvent(int browserId, int x, int y, bool mouseLeave,Copy.CefSharp.CefEventFlags modifiers) 
             => _outOfProcessClient.SendMouseMoveEvent(browserId, x, y, mouseLeave, modifiers);
 
         public void SendCaptureLostEvent(int browserId) 
             => _outOfProcessClient.SendCaptureLostEvent(browserId);
 
-        public void SendMouseClickEvent(int browserId, int x, int y, MouseButtonType changedButton, bool mouseUp, int clickCount, CefEventFlags modifiers) 
+        public void SendMouseClickEvent(int browserId, int x, int y, Copy.CefSharp.MouseButtonType changedButton, bool mouseUp, int clickCount, Copy.CefSharp.CefEventFlags modifiers) 
             => _outOfProcessClient.SendMouseClickEvent(browserId, x, y, changedButton, mouseUp, clickCount, modifiers);
 
         public IOutOfProcessClientRpc Client() => _outOfProcessClient;

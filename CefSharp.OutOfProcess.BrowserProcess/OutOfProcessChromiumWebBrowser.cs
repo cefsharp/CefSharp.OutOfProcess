@@ -829,6 +829,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         public System.Drawing.Point browserLocation { get; internal set; }
 
         public Rect viewRect { get; internal set; }
+        IPermissionHandler IWebBrowser.PermissionHandler 
+        { 
+            get => throw new NotImplementedException(); 
+            set => throw new NotImplementedException(); 
+        }
 
         /// <summary>
         /// Gets the ScreenInfo - currently used to get the DPI scale factor.
@@ -907,6 +912,13 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var usedBytes = width * height * BytesPerPixel;
 
+            
+            //{
+            //    Buffer.MemoryCopy(
+            //        viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle().ToPointer(), buffer.ToPointer(),
+            //        (uint)usedBytes,
+            //        maximumNumberOfBytes);
+            //}
             CopyMemory(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, (uint)usedBytes);
             viewAccessor.Flush();
             _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, null, renderFileName);
@@ -914,7 +926,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         string renderFileName;
 
-        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
+        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", ExactSpelling = true)]
         public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
 
 

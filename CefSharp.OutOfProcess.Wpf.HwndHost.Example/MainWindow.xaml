@@ -37,9 +37,10 @@
                     <behaviours:TextBoxBindingUpdateOnEnterBehaviour />
                 </behaviors:Interaction.Behaviors>
             </TextBox>
+            <Button Content="ReplaceBrowserControl" Grid.Column="3" Click="OnClick"/>
         </Grid>
-        <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1">
-            <hwndhost:TcWebBrowser x:Name="tcbrowser" Address="http://www.google.de" />
+        <Border x:Name="contenthost" Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1">
+            <hwndhost:TcWebBrowser x:Name="tcbrowser" Address="https://www.google.de" />
             <!--<ContentPresenter x:Name="BrowserContentPresenter" />
             --><!--<hwndhost:ChromiumWebBrowser x:Name="Browser"
                                     Address="https://www.google.com">

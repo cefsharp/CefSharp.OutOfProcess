@@ -15,9 +15,7 @@ using System.Windows.Controls;
 using CefSharp.Wpf.Rendering;
 using System.Windows.Media;
 using CefSharp.Wpf.Internals;
-using Copy.CefSharp;
 using Application = System.Windows.Application;
-using CefSharp.Wpf;
 using System.Threading.Tasks;
 using CefSharp.Dom;
 using CefSharp.OutOfProcess.Core;
@@ -140,9 +138,6 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             Focusable = true;
             FocusVisualStyle = null;
-
-
-
             UseLayoutRounding = true;
 
             Initialize();
@@ -220,22 +215,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         {
             var ctx = (DevToolsContext)_devToolsContext;
 
-            ////////TODO
-            ////////ctx.DOMContentLoaded += DOMContentLoaded;
-            ////////ctx.Error += BrowserProcessCrashed;
-            ////////ctx.FrameAttached += FrameAttached;
-            ////////ctx.FrameDetached += FrameDetached;
-            ////////ctx.FrameNavigated += FrameNavigated;
-            ////////ctx.Load += JavaScriptLoad;
-            ////////ctx.PageError += RuntimeExceptionThrown;
-            ////////ctx.Popup += Popup;
-            ////////ctx.Request += NetworkRequest;
-            ////////ctx.RequestFailed += NetworkRequestFailed;
-            ////////ctx.RequestFinished += NetworkRequestFinished;
-            ////////ctx.RequestServedFromCache += NetworkRequestServedFromCache;
-            ////////ctx.Response += NetworkResponse;
-            ////////ctx.Console += ConsoleMessage;
-            ////////ctx.LifecycleEvent += LifecycleEvent;
+            OnInitializeDevContext(ctx);
 
             _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
             {
@@ -254,6 +234,11 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             ////        _host.LoadUrl(_id, Address);
             ////    }
             ////});
+        }
+
+        protected virtual void OnInitializeDevContext(DevToolsContext context)
+        {
+
         }
 
         private void PresentationSourceChangedHandler(object sender, SourceChangedEventArgs args)

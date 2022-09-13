@@ -12,24 +12,12 @@ namespace CefSharp.OutOfProcess.Core
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<MessageErrorEventArgs> MessageError;
+        public event EventHandler Disconnected;
 
         public OutOfProcessConnectionTransport(int browserId, OutOfProcessHost outOfProcessHost)
         {
             BrowserId = browserId;
             OutOfProcessHost = outOfProcessHost;
-        }
-
-        event EventHandler IConnectionTransport.Disconnected
-        {
-            add
-            {
-                ;
-            }
-
-            remove
-            {
-                ;
-            }
         }
 
         void IDisposable.Dispose()
