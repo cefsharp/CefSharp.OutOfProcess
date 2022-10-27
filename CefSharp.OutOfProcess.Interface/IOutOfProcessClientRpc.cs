@@ -39,6 +39,8 @@ namespace CefSharp.OutOfProcess.Interface
         /// <returns>Task</returns>
         Task CreateBrowser(IntPtr parentHwnd, string url, int browserId);
 
+        // TODO for PR to provide both render options. Task CreateBrowser(string sharedFileAccesor, string url, int browserId);
+
         /// <summary>
         /// Notify the browser that the window hosting it is about to be moved or resized.
         /// This will dismiss any existing popups (dropdowns).

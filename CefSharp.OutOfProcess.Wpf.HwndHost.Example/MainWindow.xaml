@@ -39,16 +39,20 @@
             </TextBox>
             <Button Content="ReplaceBrowserControl" Grid.Column="3" Click="OnClick"/>
         </Grid>
-        <Border x:Name="contenthost" Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1">
-            <hwndhost:TcWebBrowser x:Name="tcbrowser" Address="https://www.google.de" />
-            <!--<ContentPresenter x:Name="BrowserContentPresenter" />
-            --><!--<hwndhost:ChromiumWebBrowser x:Name="Browser"
-                                    Address="https://www.google.com">
-                <behaviors:Interaction.Behaviors>
-                    <behaviours:HoverLinkBehaviour x:Name="HoverLinkBehaviour"/>
-                </behaviors:Interaction.Behaviors>
-            </hwndhost:ChromiumWebBrowser>-->
-        </Border>
+        <StackPanel Orientation="Horizontal"  Grid.Row="1">
+            <Border x:Name="contenthost" Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1" MinWidth="500" VerticalAlignment="Stretch" MinHeight="300">
+                <hwndhost:TcWebBrowser x:Name="tcbrowser" Address="https://www.google.de" />
+                <!--<ContentPresenter x:Name="BrowserContentPresenter" />
+                -->
+                <!--<hwndhost:ChromiumWebBrowser x:Name="Browser"
+                                        Address="https://www.google.com">
+                    <behaviors:Interaction.Behaviors>
+                        <behaviours:HoverLinkBehaviour x:Name="HoverLinkBehaviour"/>
+                    </behaviors:Interaction.Behaviors>
+                </hwndhost:ChromiumWebBrowser>-->
+            </Border>
+            <hwndhost:TcWebBrowser x:Name="tcbrowser_right_side" Address="https://www.iota.org" MinWidth="500" VerticalAlignment="Stretch" MinHeight="300" />
+        </StackPanel>
         <ProgressBar IsIndeterminate="{Binding IsLoading, ElementName=Browser}"
                      HorizontalAlignment="Stretch"
                      VerticalAlignment="Top"

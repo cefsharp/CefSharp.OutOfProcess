@@ -59,7 +59,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
 
         private async void TcWebBrowser_DevToolsContextAvailable(object sender, EventArgs e)
         {
-            await Task.Delay(500);
+            await Task.Delay(5500); // TODO 500 was not reliable enough
             Task t = DevToolsContext.ExposeFunctionAsync("Foo", Foo);
             t.Wait();
 

@@ -30,13 +30,13 @@ namespace CefSharp.OutOfProcess.Core
 
         public void InvokeMessageReceived(string message)
         {
-            Debug.WriteLine("<  " + message);
+            Debug.WriteLine("<   " + message);
             MessageReceived?.Invoke(this, new MessageReceivedEventArgs(message));
         }
 
         Task IConnectionTransport.SendAsync(string message)
         {
-            Debug.WriteLine(">>" + message);
+            Debug.WriteLine(">> " + message);
             return OutOfProcessHost.SendDevToolsMessageAsync(BrowserId, message);
         }
 

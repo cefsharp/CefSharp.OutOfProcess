@@ -162,7 +162,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             if (preReady)
             {
                 // TODO this fixes exception, maybe because of symbol laoding
-                await Task.Delay(1000);
+                await Task.Delay(2000);
                 InitializeDevContextReady();
             }
         }
