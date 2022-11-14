@@ -1,5 +1,4 @@
-﻿using Copy.CefSharp.Structs;
-using System;
+﻿using System;
 
 namespace CefSharp.OutOfProcess.Interface
 {
@@ -17,6 +16,13 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="browserHwnd">HWND</param>
         /// <returns>Task</returns>
         void NotifyBrowserCreated(int browserId, IntPtr browserHwnd);
+
+        /// <summary>
+        /// Status message changed for the specified browser
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        /// <param name="statusMessage">status message</param>
+        void NotifyStatusMessage(int browserId, string statusMessage);
 
         /// <summary>
         /// DevTools agent was attached for the specified browser
@@ -56,6 +62,13 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="canGoForward">can go forward</param>
         /// <param name="isLoading">is loading</param>
         void NotifyLoadingStateChange(int browserId, bool canGoBack, bool canGoForward, bool isLoading);
+
+        /// <summary>
+        /// Title was changed for the specified browser
+        /// </summary>
+        /// <param name="browserId">browser Id</param>
+        /// <param name="title">title</param>
+        void NotifyTitleChanged(int browserId, string title);
         
         /// <summary>
         /// Context has been initialized in the Remote Host (Browser Process)
@@ -67,9 +80,5 @@ namespace CefSharp.OutOfProcess.Interface
         void NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion);
 
         void NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
-
-        void NotifyFrameLoadStart(int browserId, string frameName, string url);
-
-        void NotifyFrameLoadEnd(int browserId, string frameName, string url, int httpStatusCode);
     }
 }

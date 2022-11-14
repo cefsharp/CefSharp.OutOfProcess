@@ -1,29 +1,42 @@
-﻿using Copy.CefSharp.Structs;
+﻿using CefSharp.OutOfProcess.Interface;
 using System;
 
 namespace CefSharp.OutOfProcess.Internal
 {
-    public interface IChromiumWebBrowserInternal : IDisposable
+    public interface IChromiumWebBrowserInternal : IChromiumWebBrowser
     {
         /// <summary>
         /// Identifier
         /// </summary>
         int Id { get; }
 
-        void OnDevToolsMessage(string jsonMsg);
-
-        /// <inheritdoc/>
-        void OnDevToolsReady();
-
         /// <summary>
         /// Set the browser Hwnd
         /// </summary>
         /// <param name="hwnd">Hwnd</param>
         void OnAfterBrowserCreated(IntPtr hwnd);
-        void OnPaint(bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
+
+        /// <summary>
+        /// Called when a DevTools message arrives from the browser process
+        /// </summary>
+        /// <param name="jsonMsg"></param>
+        void OnDevToolsMessage(string jsonMsg);
+
+        /// <summary>
+        /// DevTools is ready in the browser process to create the DevToolsContext
+        /// </summary>
+        void OnDevToolsReady();
+
+        void SetStatusMessage(string msg);
+        void SetTitle(string title);
+
         void SetAddress(string address);
         void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading);
-        void OnFrameLoadStart(string frameName, string url);
-        void OnFrameLoadEnd(string frameName, string url, int httpStatusCode);
+
+    }
+
+    public interface IRenderHandler
+    {
+        void OnPaint(bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
     }
 }

@@ -1,27 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>WinExe</OutputType>
-		<TargetFrameworks>netcoreapp3.1</TargetFrameworks>
-		<PlatformTarget>x64</PlatformTarget>
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
-		<SelfContained>false</SelfContained>
-		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-		<LangVersion>Latest</LangVersion>
-		<!--<CefSharpBuildAction>NoAction</CefSharpBuildAction>-->
-	</PropertyGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <LangVersion>Latest</LangVersion>
+    <!--<CefSharpBuildAction>NoAction</CefSharpBuildAction>-->
+  </PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
-		<PackageReference Include="PInvoke.User32" Version="0.7.124" />
-		<PackageReference Include="StreamJsonRpc" Version="2.12.27" />
-		<PackageReference Include="CefSharp.Dom" Version="2.0.83" />
-		<PackageReference Include="CefSharp.Common.NETCore" Version="104.4.180" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
+    <PackageReference Include="PInvoke.User32" Version="0.7.124" />
+    <PackageReference Include="StreamJsonRpc" Version="2.12.27" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj" />
-	</ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="CefSharp.Common" Version="104.4.180" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="CefSharp.Common.NETCore" Version="104.4.180" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj" />
+  </ItemGroup>
 
 </Project>

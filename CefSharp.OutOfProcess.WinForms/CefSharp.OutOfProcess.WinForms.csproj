@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PInvoke.Kernel32" Version="0.7.104" />
+    <PackageReference Include="PInvoke.User32" Version="0.7.104" />
+    <PackageReference Include="StreamJsonRpc" Version="2.11.35" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ChromiumWebBrowser.cs" />
+  </ItemGroup>
+
+</Project>

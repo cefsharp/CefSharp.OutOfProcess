@@ -39,9 +39,9 @@ namespace CefSharp.Wpf.Internals
         /// </summary>
         public int Bottom;
 
-        public static implicit operator Copy.CefSharp.Structs.Rect(RectStruct rect)
+        public static implicit operator CefSharp.OutOfProcess.Interface.Rect(RectStruct rect)
         {
-            return new Copy.CefSharp.Structs.Rect(0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top);
+            return new CefSharp.OutOfProcess.Interface.Rect(0, 0, rect.Right - rect.Left, rect.Bottom - rect.Top);
         }
     }
 }

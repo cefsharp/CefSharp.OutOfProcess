@@ -8,7 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Rect = Copy.CefSharp.Structs.Rect;
+using Rect = CefSharp.OutOfProcess.Interface.Rect;
 
 namespace CefSharp.Wpf.Rendering
 {

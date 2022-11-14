@@ -107,7 +107,7 @@ namespace CefSharp.Wpf.Rendering
         /// <param name="width">width</param>
         /// <param name="height">height</param>
         /// <param name="image">image used as parent for rendered bitmap</param>
-        public virtual void OnPaint(bool isPopup, Copy.CefSharp.Structs.Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image)
+        public virtual void OnPaint(bool isPopup, CefSharp.OutOfProcess.Interface.Rect dirtyRect, IntPtr buffer, byte[] data, int width, int height, Image image)
         {
             if (IsDisposed || image.Dispatcher.HasShutdownStarted)
             {
@@ -124,6 +124,6 @@ namespace CefSharp.Wpf.Rendering
             }
         }
 
-        protected abstract void CreateOrUpdateBitmap(bool isPopup, Copy.CefSharp.Structs.Rect dirtyRect, IntPtr buffer, int width, int height, Image image, ref Size currentSize, ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor viewAccessor);
+        protected abstract void CreateOrUpdateBitmap(bool isPopup, CefSharp.OutOfProcess.Interface.Rect dirtyRect, IntPtr buffer, int width, int height, Image image, ref Size currentSize, ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor viewAccessor);
     }
 }

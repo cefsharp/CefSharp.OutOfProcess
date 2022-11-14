@@ -15,22 +15,11 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
     /// <seealso cref="CefSharp.Wpf.HwndHost.IWpfWebBrowser" />
     /// based on https://docs.microsoft.com/en-us/dotnet/framework/wpf/advanced/walkthrough-hosting-a-win32-control-in-wpf
     /// and https://stackoverflow.com/questions/6500336/custom-dwm-drawn-window-frame-flickers-on-resizing-if-the-window-contains-a-hwnd/17471534#17471534
-    public sealed class TcWebBrowser : ChromiumWebBrowser2
+    public sealed class TcWebBrowser : OffscreenChromiumWebBrowser
     {
         public TcWebBrowser()
         {
             base.DevToolsContextAvailable += TcWebBrowser_DevToolsContextAvailable;
-        }
-
-        internal override void OnFrameLoadStart(string frameName, string url)
-        {
-            base.OnFrameLoadStart(frameName, url);
-        }
-
-        internal override void OnFrameLoadEnd(string frameName, string url, int httpStatusCode)
-        {
-            //   DevToolsContext.ExposeFunctionAsync("foo", () => throw new InvalidOperationException()).Wait();
-            //   DevToolsContext.EvaluateFunctionAsync("foo()").Wait();
         }
 
         protected override void OnInitializeDevContext(DevToolsContext context)

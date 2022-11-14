@@ -1,7 +1,6 @@
 ﻿using CefSharp.OutOfProcess.Interface;
 using CefSharp.OutOfProcess.Internal;
-using Copy.CefSharp;
-using Copy.CefSharp.Structs;
+using CefSharp.Structs;
 using PInvoke;
 using StreamJsonRpc;
 using System;
@@ -9,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using Rect = CefSharp.OutOfProcess.Interface.Rect;
 
 namespace CefSharp.OutOfProcess
 {
@@ -30,39 +30,56 @@ namespace CefSharp.OutOfProcess
         private int _browserIdentifier = 1;
         private string _outofProcessHostExePath;
         private string _cachePath;
+        private bool _offscreenRendering;
         private ConcurrentDictionary<int, IChromiumWebBrowserInternal> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowserInternal>();
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private OutOfProcessHost(string outOfProcessHostExePath, string cachePath = null)
+        private OutOfProcessHost(string outOfProcessHostExePath, string cachePath = null, bool offscreenRendering = false)
         {
             _outofProcessHostExePath = outOfProcessHostExePath;
             _cachePath = cachePath;
+            _offscreenRendering = offscreenRendering;
         }
 
         /// <summary>
         /// UI Thread assocuated with this <see cref="OutOfProcessHost"/>
         /// </summary>
-        public int UiThreadId => _uiThreadId;
+        public int UiThreadId
+        {
+            get { return _uiThreadId; }
+        }
 
         /// <summary>
         /// Thread Id of the UI Thread running in the Browser Process
         /// </summary>
-        public int RemoteUiThreadId => _remoteuiThreadId;
+        public int RemoteUiThreadId
+        {
+            get { return _remoteuiThreadId; }
+        }
 
         /// <summary>
         /// CefSharp Version
         /// </summary>
-        public string CefSharpVersion => _cefSharpVersion;
+        public string CefSharpVersion
+        {
+            get { return _cefSharpVersion; }
+        }
 
         /// <summary>
         /// Cef Version
         /// </summary>
-        public string CefVersion => _cefVersion;
+        public string CefVersion
+        {
+            get { return _cefVersion; }
+        }
 
         /// <summary>
         /// Chromium Version
         /// </summary>
-        public string ChromiumVersion => _chromiumVersion;
+        public string ChromiumVersion
+        {
+            get { return _chromiumVersion; }
+        }
 
         /// <summary>
         /// Sends an IPC message to the Browser Process instructing it
@@ -86,13 +103,16 @@ namespace CefSharp.OutOfProcess
             return _outOfProcessClient.SendDevToolsMessage(browserId, message);
         }
 
-        private Task<OutOfProcessHost> InitializedTask => _processInitialized.Task;
+        private Task<OutOfProcessHost> InitializedTask
+        {
+            get { return _processInitialized.Task; }
+        }
 
         private void Init()
         {
             var currentProcess = Process.GetCurrentProcess();
 
-            var args = $"--parentProcessId={currentProcess.Id} --cachePath={_cachePath}";
+            var args = $"--parentProcessId={currentProcess.Id} --cachePath={_cachePath} --offscreenRendering={_offscreenRendering}";
 
             _browserProcess = Process.Start(new ProcessStartInfo(_outofProcessHostExePath, args)
             {
@@ -176,16 +196,44 @@ namespace CefSharp.OutOfProcess
             }
         }
 
-        public void NotifyMoveOrResizeStarted(int id, int width, int height, int screenX, int screenY) => _outOfProcessClient.NotifyMoveOrResizeStarted(id, width, height, screenX, screenY);
+        void IOutOfProcessHostRpc.NotifyStatusMessage(int browserId, string statusMessage)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetStatusMessage(statusMessage);
+            }
+        }
 
-        public void LoadUrl(int id, string url) => _outOfProcessClient.LoadUrl(id, url);
+        void IOutOfProcessHostRpc.NotifyTitleChanged(int browserId, string title)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.SetTitle(title);
+            }
+        }
+
+        void IOutOfProcessHostRpc.NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+               ((IRenderHandler) chromiumWebBrowser).OnPaint(false, dirtyRect, width, height, buffer, data, file);
+            }
+        }
+
+        public void NotifyMoveOrResizeStarted(int id, int width, int height, int screenX, int screenY)
+        {
+            _outOfProcessClient.NotifyMoveOrResizeStarted(id, width, height, screenX, screenY);
+        }
 
         /// <summary>
         /// Set whether the browser is focused. (Used for Normal Rendering e.g. WinForms)
         /// </summary>
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
-        public void SetFocus(int id, bool focus) => _outOfProcessClient.SetFocus(id, focus);
+        public void SetFocus(int id, bool focus)
+        {
+            _outOfProcessClient.SetFocus(id, focus);
+        }
 
         public void CloseBrowser(int id)
         {
@@ -218,41 +266,6 @@ namespace CefSharp.OutOfProcess
             host.Init();
 
             return host.InitializedTask;
-        }
-
-        void IOutOfProcessHostRpc.NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file)
-        {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.OnPaint(false, dirtyRect, width, height, buffer, data, file);
-            }
-        }
-
-        public void SendMouseMoveEvent(int browserId, int x, int y, bool mouseLeave,Copy.CefSharp.CefEventFlags modifiers) 
-            => _outOfProcessClient.SendMouseMoveEvent(browserId, x, y, mouseLeave, modifiers);
-
-        public void SendCaptureLostEvent(int browserId) 
-            => _outOfProcessClient.SendCaptureLostEvent(browserId);
-
-        public void SendMouseClickEvent(int browserId, int x, int y, Copy.CefSharp.MouseButtonType changedButton, bool mouseUp, int clickCount, Copy.CefSharp.CefEventFlags modifiers) 
-            => _outOfProcessClient.SendMouseClickEvent(browserId, x, y, changedButton, mouseUp, clickCount, modifiers);
-
-        public IOutOfProcessClientRpc Client() => _outOfProcessClient;
-
-        void IOutOfProcessHostRpc.NotifyFrameLoadStart(int browserId, string frameName, string url)
-        {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.OnFrameLoadStart(frameName, url);
-            }
-        }
-
-        void IOutOfProcessHostRpc.NotifyFrameLoadEnd(int browserId, string frameName, string url, int httpStatusCode)
-        {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.OnFrameLoadEnd(frameName, url, httpStatusCode);
-            }
         }
     }
 }

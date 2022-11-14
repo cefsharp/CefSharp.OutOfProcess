@@ -12,6 +12,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.H
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.HwndHost.Example", "CefSharp.OutOfProcess.Wpf.HwndHost.Example\CefSharp.OutOfProcess.Wpf.HwndHost.Example.csproj", "{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.OffscreenHost", "CefSharp.OutOfProcess.Wpf.OffscreenHost\CefSharp.OutOfProcess.Wpf.OffscreenHost.csproj", "{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.OffscreenHost.Example", "CefSharp.OutOfProcess.Wpf.OffscreenHost.Example\CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.csproj", "{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +42,14 @@ Global
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

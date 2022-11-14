@@ -3,22 +3,17 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using System.ComponentModel;
-using CefSharp.OutOfProcess.Interface;
-using System.Diagnostics;
-using CefSharp.Structs;
-using CefSharp.Enums;
-using CefSharp.Wpf.Internals;
-using System.IO.MemoryMappedFiles;
-using System.Runtime.InteropServices;
-using System.IO;
 using CefSharp.Callback;
+using System.IO;
+using CefSharp.OutOfProcess.Interface;
+using System.Runtime.InteropServices;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
     /// <summary>
     /// An ChromiumWebBrowser instance specifically for hosting CEF out of process
     /// </summary>
-    public partial class OutOfProcessChromiumWebBrowser : IRenderWebBrowser
+    public class OutOfProcessChromiumWebBrowser : IWebBrowserInternal
     {
         public const string BrowserNotInitializedExceptionErrorMessage =
             "The ChromiumWebBrowser instance creates the underlying Chromium Embedded Framework (CEF) browser instance in an async fashion. " +
@@ -31,9 +26,15 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         private IRegistration _devtoolsRegistration;
 
         /// <summary>
+        /// If true the the WS_EX_NOACTIVATE style will be removed so that future mouse clicks
+        /// inside the browser correctly activate and focus the window.
+        /// </summary>
+        private bool _removeExNoActivateStyle;
+
+        /// <summary>
         /// Internal ID used for tracking browsers between Processes;
         /// </summary>
-        private int _id;
+        private protected readonly int _id;
 
         /// <summary>
         /// The managed cef browser adapter
@@ -43,7 +44,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// JSON RPC used for IPC with host
         /// </summary>
-        private IOutOfProcessHostRpc _outofProcessHostRpc;
+        private protected readonly IOutOfProcessHostRpc _outofProcessHostRpc;
 
         /// <summary>
         /// Flag to guard the creation of the underlying browser - only one instance can be created
@@ -65,6 +66,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// or in the process of getting disposed
         /// </summary>
         private int _disposeSignaled;
+
+        /// <summary>
+        /// The browser
+        /// </summary>
+        private IBrowser _browser;
 
         /// <summary>
         /// Id
@@ -269,7 +275,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnFrameLoadStart(FrameLoadStartEventArgs args)
         {
             FrameLoadStart?.Invoke(this, args);
-            _outofProcessHostRpc.NotifyFrameLoadStart(_id, args.Frame.Name, args.Url);
         }
 
         /// <summary>
@@ -279,7 +284,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnFrameLoadEnd(FrameLoadEndEventArgs args)
         {
             FrameLoadEnd?.Invoke(this, args);
-            _outofProcessHostRpc.NotifyFrameLoadEnd(_id, args.Frame.Name, args.Url, args.HttpStatusCode);
         }
 
         /// <summary>
@@ -298,6 +302,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.OnStatusMessage(StatusMessageEventArgs args)
         {
             StatusMessage?.Invoke(this, args);
+
+            _outofProcessHostRpc.NotifyStatusMessage(_id, args.Value);
         }
 
         /// <summary>
@@ -336,6 +342,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 return;
             }
 
+            _browser = browser;
             BrowserCore = browser;
             Interlocked.Exchange(ref _browserInitialized, 1);
 
@@ -362,8 +369,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var devToolsClient = browser.GetDevToolsClient();
 
             //TODO: Do we need perforamnce and Log enabled?
-            var devToolsEnableTask = Task.WhenAll(
-                devToolsClient.Page.EnableAsync(),
+            var devToolsEnableTask = Task.WhenAll(devToolsClient.Page.EnableAsync(),
                 devToolsClient.Page.SetLifecycleEventsEnabledAsync(true),
                 devToolsClient.Runtime.EnableAsync(),
                 devToolsClient.Network.EnableAsync(),
@@ -376,7 +382,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 _outofProcessHostRpc.NotifyDevToolsReady(_id);
 
-            }, TaskScheduler.Default);            
+            }, TaskScheduler.Default);
         }
 
         /// <summary>
@@ -385,6 +391,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <param name="args">The <see cref="LoadingStateChangedEventArgs"/> instance containing the event data.</param>
         void IWebBrowserInternal.SetLoadingStateChange(LoadingStateChangedEventArgs args)
         {
+            if (_removeExNoActivateStyle && InternalIsBrowserInitialized())
+            {
+                _removeExNoActivateStyle = false;
+
+                var hwnd = BrowserCore.GetHost().GetWindowHandle();
+
+                // Remove the WS_EX_NOACTIVATE style so that future mouse clicks inside the
+                // browser correctly activate and focus the browser. 
+                //https://github.com/chromiumembedded/cef/blob/9df4a54308a88fd80c5774d91c62da35afb5fd1b/tests/cefclient/browser/root_window_win.cc#L1088
+                RemoveExNoActivateStyle(hwnd);
+            }
+
             CanGoBack = args.CanGoBack;
             CanGoForward = args.CanGoForward;
             IsLoading = args.IsLoading;
@@ -394,8 +412,47 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             LoadingStateChanged?.Invoke(this, args);
         }
 
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+        private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int index);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+        private static extern int SetWindowLong32(HandleRef hWnd, int index, int dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        private static extern IntPtr SetWindowLongPtr64(HandleRef hWnd, int index, IntPtr dwNewLong);
+
+        private const int GWL_EXSTYLE = -20;
+
+        // https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowlongptra
+        //SetWindowLongPtr for x64, SetWindowLong for x86
+        private void RemoveExNoActivateStyle(IntPtr hwnd)
+        {
+            var exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+
+            if (IntPtr.Size == 8)
+            {
+                if ((exStyle.ToInt64() & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE)
+                {
+                    exStyle = new IntPtr(exStyle.ToInt64() & ~WS_EX_NOACTIVATE);
+                    //Remove WS_EX_NOACTIVATE
+                    SetWindowLongPtr64(new HandleRef(this, hwnd), GWL_EXSTYLE, exStyle);
+                }
+            }
+            else
+            {
+                if ((exStyle.ToInt32() & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE)
+                {
+                    //Remove WS_EX_NOACTIVATE
+                    SetWindowLong32(new HandleRef(this, hwnd), GWL_EXSTYLE, (int)(exStyle.ToInt32() & ~WS_EX_NOACTIVATE));
+                }
+            }
+        }
+
         /// <inheritdoc/>
-        public void LoadUrl(string url) => BrowserCore.MainFrame.LoadUrl(url);
+        public void LoadUrl(string url)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <inheritdoc/>
         public Task<LoadUrlAsyncResponse> LoadUrlAsync(string url)
@@ -438,7 +495,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfDisposed();
             ThrowExceptionIfBrowserNotInitialized();
 
-            using (var devToolsClient = BrowserCore.GetDevToolsClient())
+            using (var devToolsClient = _browser.GetDevToolsClient())
             {
                 //Get the content size
                 var layoutMetricsResponse = await devToolsClient.Page.GetLayoutMetricsAsync().ConfigureAwait(continueOnCapturedContext: false);
@@ -606,7 +663,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </param>
         /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
         public OutOfProcessChromiumWebBrowser(IOutOfProcessHostRpc outOfProcessServer, int id, string address = "",
-            IRequestContext requestContext = null)
+            IRequestContext requestContext = null, bool offscreenRendering = false)
         {
             _id = id;
             RequestContext = requestContext;
@@ -615,7 +672,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             Cef.AddDisposable(this);
             Address = address;
 
-            _managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, true);
+            _managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, offscreenRendering);
         }
 
         /// <summary>
@@ -677,6 +734,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 FocusHandler = new NoFocusHandler();
 
+                _browser = null;
                 BrowserCore = null;
 
                 _managedCefBrowserAdapter?.Dispose();
@@ -698,15 +756,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <exception cref="System.Exception">An instance of the underlying browser has already been created, this method can only be called once.</exception>
         public void CreateBrowser(IWindowInfo windowInfo = null, IBrowserSettings browserSettings = null)
         {
-            if (windowInfo.ParentWindowHandle != IntPtr.Zero)
-            {
-                monitorInfo.Init();
-                MonitorInfo.GetMonitorInfoForWindowHandle(windowInfo.ParentWindowHandle, ref monitorInfo);
-            }
-
-            ((IRenderWebBrowser)this).HasParent = true;
-
-            Debugger.Break();
+            //Debugger.Break();
 
             if (_browserCreated)
             {
@@ -719,6 +769,10 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 browserSettings = Core.ObjectFactory.CreateBrowserSettings(autoDispose: true);
             }
+
+            //We actually check if WS_EX_NOACTIVATE was set for instances
+            //the user has override CreateBrowserWindowInfo and not called base.CreateBrowserWindowInfo
+            _removeExNoActivateStyle = !windowInfo.WindowlessRenderingEnabled && (windowInfo.ExStyle & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE;
 
             //TODO: We need some sort of timeout and
             //if we use the same approach for WPF/WinForms then
@@ -740,6 +794,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 browserSettings = null;
 
             });
+
         }
 
         /// <inheritdoc/>
@@ -755,6 +810,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             get { return _managedCefBrowserAdapter?.JavascriptObjectRepository; }
         }
+
+        public IPermissionHandler PermissionHandler { get; set; }
 
         /// <summary>
         /// TODO: Improve focus
@@ -780,7 +837,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             ThrowExceptionIfDisposed();
             ThrowExceptionIfBrowserNotInitialized();
 
-            return BrowserCore;
+            return _browser;
         }
 
         /// <summary>
@@ -803,6 +860,8 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.SetTitle(TitleChangedEventArgs args)
         {
             TitleChanged?.Invoke(this, args);
+
+            _outofProcessHostRpc.NotifyTitleChanged(_id, args.Title);
         }
 
         /// <summary>
@@ -812,176 +871,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.SetTooltipText(string tooltipText)
         {
             TooltipText = tooltipText;
-        }
-
-        /// <summary>
-        /// The MonitorInfo based on the current hwnd
-        /// </summary>
-        private MonitorInfoEx monitorInfo;
-
-
-        /// <summary>
-        /// The dpi scale factor, if the browser has already been initialized
-        /// you must manually call IBrowserHost.NotifyScreenInfoChanged for the
-        /// browser to be notified of the change.
-        /// </summary>
-        public float DpiScaleFactor { get; set; } = 1;
-        public System.Drawing.Point browserLocation { get; internal set; }
-
-        public Rect viewRect { get; internal set; }
-        IPermissionHandler IWebBrowser.PermissionHandler 
-        { 
-            get => throw new NotImplementedException(); 
-            set => throw new NotImplementedException(); 
-        }
-
-        /// <summary>
-        /// Gets the ScreenInfo - currently used to get the DPI scale factor.
-        /// </summary>
-        /// <returns>ScreenInfo containing the current DPI scale factor</returns>
-        ScreenInfo? IRenderWebBrowser.GetScreenInfo() => GetScreenInfo();
-
-        /// <summary>
-        /// Gets the ScreenInfo - currently used to get the DPI scale factor.
-        /// </summary>
-        /// <returns>ScreenInfo containing the current DPI scale factor</returns>
-        protected virtual ScreenInfo? GetScreenInfo()
-        {
-            Rect rect = monitorInfo.Monitor;
-            Rect availableRect = monitorInfo.WorkArea;
-
-            if (DpiScaleFactor > 1.0)
-            {
-                rect = rect.ScaleByDpi(DpiScaleFactor);
-                availableRect = availableRect.ScaleByDpi(DpiScaleFactor);
-            }
-
-            var screenInfo = new ScreenInfo
-            {
-                DeviceScaleFactor = DpiScaleFactor,
-                Rect = rect,
-                AvailableRect = availableRect
-            };
-
-            return screenInfo;
-        }
-
-        Rect IRenderWebBrowser.GetViewRect() => viewRect;
-
-        bool IRenderWebBrowser.GetScreenPoint(int viewX, int viewY, out int screenX, out int screenY)
-        {
-            screenX = browserLocation.X;
-            screenY = browserLocation.Y;
-
-            return true;
-        }
-
-        void IRenderWebBrowser.OnAcceleratedPaint(PaintElementType type, Rect dirtyRect, IntPtr sharedHandle)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IRenderWebBrowser.OnPaint(PaintElementType type, Structs.Rect dirtyRect, IntPtr buffer, int width, int height)
-        {
-            var dirtyRectCopy = new Copy.CefSharp.Structs.Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height);
-
-            // PixelFormat PixelFormat = PixelFormats.Pbgra32;
-            int BytesPerPixel = 32 / 8;
-            int maximumPixels = 3600 * 2000;// width * height;
-            int maximumNumberOfBytes = maximumPixels * BytesPerPixel;
-
-            bool createNewBitmap = mappedFile == null || currentSize.Height != height || currentSize.Width != width;
-
-            if (createNewBitmap)
-            {
-                //If the MemoryMappedFile is smaller than we need then create a larger one
-                //If it's larger then we need then rather than going through the costly expense of
-                //allocating a new one we'll just use the old one and only access the number of bytes we require.
-                if (viewAccessor == null)
-                {
-                    //  ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
-
-                    renderFileName = $"0render_{_id}_{Guid.NewGuid()}";
-                    mappedFile = MemoryMappedFile.CreateNew(renderFileName, maximumNumberOfBytes, MemoryMappedFileAccess.ReadWrite);
-
-                    viewAccessor = mappedFile.CreateViewAccessor(0, maximumNumberOfBytes, MemoryMappedFileAccess.Write);
-                }
-
-                currentSize = new Size(width, height);
-            }
-
-            var usedBytes = width * height * BytesPerPixel;
-
-            
-            //{
-            //    Buffer.MemoryCopy(
-            //        viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle().ToPointer(), buffer.ToPointer(),
-            //        (uint)usedBytes,
-            //        maximumNumberOfBytes);
-            //}
-            CopyMemory(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, (uint)usedBytes);
-            viewAccessor.Flush();
-            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, null, renderFileName);
-        }
-
-        string renderFileName;
-
-        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", ExactSpelling = true)]
-        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
-
-
-        protected void ReleaseMemoryMappedView(ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor stream)
-        {
-            if (stream != null)
-            {
-                stream.Dispose();
-                stream = null;
-            }
-
-            if (mappedFile != null)
-            {
-                mappedFile.Dispose();
-                mappedFile = null;
-            }
-        }
-
-        MemoryMappedViewAccessor viewAccessor;
-        MemoryMappedFile mappedFile;
-        Size currentSize;
-
-        void IRenderWebBrowser.OnCursorChange(IntPtr cursor, CursorType type, CursorInfo customCursorInfo)
-        {
-            // throw new NotImplementedException();
-        }
-
-        bool IRenderWebBrowser.StartDragging(IDragData dragData, DragOperationsMask mask, int x, int y)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IRenderWebBrowser.UpdateDragCursor(DragOperationsMask operation)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IRenderWebBrowser.OnPopupShow(bool show)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IRenderWebBrowser.OnPopupSize(Rect rect)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IRenderWebBrowser.OnImeCompositionRangeChanged(Structs.Range selectedRange, Rect[] characterBounds)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IRenderWebBrowser.OnVirtualKeyboardRequested(IBrowser browser, TextInputMode inputMode)
-        {
-            //throw new NotImplementedException();
         }
     }
 }

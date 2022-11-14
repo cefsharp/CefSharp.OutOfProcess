@@ -2,8 +2,6 @@
 //
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-using Copy.CefSharp;
-using System;
 using System.IO;
 using System.Text;
 using System.Windows;
@@ -17,6 +15,30 @@ namespace CefSharp.Wpf.Internals
     /// </summary>
     public static class WpfExtensions
     {
+        /// <summary>
+        /// TODO move to helper
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        public static Dom.Input.MouseButton GetButton(this MouseButtonEventArgs e)
+        {
+            Dom.Input.MouseButton buttonState = Dom.Input.MouseButton.None;
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                buttonState = Dom.Input.MouseButton.Left;
+            }
+            else if (e.ChangedButton == MouseButton.Right)
+            {
+                buttonState = Dom.Input.MouseButton.Right;
+            }
+            else if (e.ChangedButton == MouseButton.Middle)
+            {
+                buttonState = Dom.Input.MouseButton.Middle;
+            }
+
+            return buttonState;
+        }
+
         /// <summary>
         /// Gets the modifiers.
         /// </summary>

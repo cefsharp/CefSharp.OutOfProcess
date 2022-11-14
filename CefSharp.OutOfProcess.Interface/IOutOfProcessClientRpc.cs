@@ -1,5 +1,4 @@
-﻿using Copy.CefSharp;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
@@ -39,8 +38,6 @@ namespace CefSharp.OutOfProcess.Interface
         /// <returns>Task</returns>
         Task CreateBrowser(IntPtr parentHwnd, string url, int browserId);
 
-        // TODO for PR to provide both render options. Task CreateBrowser(string sharedFileAccesor, string url, int browserId);
-
         /// <summary>
         /// Notify the browser that the window hosting it is about to be moved or resized.
         /// This will dismiss any existing popups (dropdowns).
@@ -54,16 +51,5 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
         void SetFocus(int browserId, bool focus);
-
-        void LoadUrl(int browserId, string address);
-
-
-        void SendCaptureLostEvent(int browserId);
-
-        void SendMouseClickEvent(int browserId, int X, int Y, MouseButtonType changedButton, bool mouseUp, int clickCount, CefEventFlags modifiers);
-
-        void SendMouseMoveEvent(int browserId, int X, int Y, bool mouseLeave, CefEventFlags modifiers);
-
-        void ExecuteJavaScriptAsync(int browserId, string script);
     }
 }

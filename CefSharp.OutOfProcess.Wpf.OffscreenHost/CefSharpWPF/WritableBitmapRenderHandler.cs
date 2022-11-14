@@ -39,7 +39,7 @@ namespace CefSharp.Wpf.Rendering
             this.dispatcherPriority = dispatcherPriority;
         }
 
-        protected override void CreateOrUpdateBitmap(bool isPopup, Copy.CefSharp.Structs.Rect dirtyRect, IntPtr buffer, int width, int height, Image image, ref Size currentSize, ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor viewAccessor)
+        protected override void CreateOrUpdateBitmap(bool isPopup, CefSharp.OutOfProcess.Interface.Rect dirtyRect, IntPtr buffer, int width, int height, Image image, ref Size currentSize, ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor viewAccessor)
         {
             bool createNewBitmap = false;
 
