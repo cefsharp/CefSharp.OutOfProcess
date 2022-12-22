@@ -2,7 +2,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace CefSharp.OutOfProcess.WinForms
+namespace CefSharp.OutOfProcess
 {
     public class OutOfProcessConnectionTransport : IConnectionTransport
     {
