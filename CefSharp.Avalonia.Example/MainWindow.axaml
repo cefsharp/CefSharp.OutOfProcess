@@ -1,0 +1,56 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:rxui="using:Avalonia.ReactiveUI"
+        x:Class="CefSharp.Avalonia.Example.MainWindow"
+        MinWidth="500"
+        MinHeight="300"
+        Title="CefSharp.Avalonia.Example">
+  <Window.Styles>
+    <Style Selector="TabControl">
+      <Setter Property="Background" Value="#F0F0F0"/>
+    </Style>
+    
+    <Style Selector="TabControl WrapPanel">
+      <Setter Property="Background" Value="#2B579A"/>
+    </Style>
+
+    <Style Selector="TabItem">
+      <Setter Property="FontSize" Value="16"/>
+      <Setter Property="Height" Value="34"/>
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Background" Value="#2B579A"/>
+      <Setter Property="Foreground" Value="#F0F0F0"/>
+    </Style>
+    <Style Selector="TabItem:pointerover">
+      <Setter Property="Background" Value="#124078"/>
+    </Style>
+
+    <Style Selector="TabItem:selected">
+      <Setter Property="Background" Value="#f0f0f0"/>
+      <Setter Property="Foreground" Value="#2B579A"/>
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="Auto, *">
+    <Menu Name="mainMenu" Grid.Row="0">
+      <MenuItem Header="_File">
+        <MenuItem Header="_New Tab" Command="{Binding AddTab}" />
+        <Separator/>
+        <MenuItem Header="_Exit" Click="OnFileExitMenuItemClick"/>
+      </MenuItem>
+    </Menu>
+    
+    <TabControl Name="tabControl" Grid.Row="1" Items="{Binding Tabs}" AutoScrollToSelectedItem="True">
+      <TabControl.ItemTemplate>
+        <DataTemplate>
+          <TextBlock Text="{Binding Header}" />
+        </DataTemplate>
+      </TabControl.ItemTemplate>
+      <TabControl.ContentTemplate>
+        <DataTemplate>
+          <rxui:ViewModelViewHost ViewModel="{Binding}" />
+        </DataTemplate>
+      </TabControl.ContentTemplate>
+    </TabControl>
+  </Grid>
+</Window>
