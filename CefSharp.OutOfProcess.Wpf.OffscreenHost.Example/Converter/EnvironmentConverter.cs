@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example.Converter
+namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.Converter
 {
     public class EnvironmentConverter : IValueConverter
     {

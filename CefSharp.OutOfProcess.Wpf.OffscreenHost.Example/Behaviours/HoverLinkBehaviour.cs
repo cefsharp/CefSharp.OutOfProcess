@@ -2,9 +2,9 @@ using System.Windows;
 using System;
 using Microsoft.Xaml.Behaviors;
 
-namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example.Behaviours
+namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.Behaviours
 {
-    public class HoverLinkBehaviour : Behavior<ChromiumWebBrowser>
+    public class HoverLinkBehaviour : Behavior<OffscreenChromiumWebBrowser>
     {
         // Using a DependencyProperty as the backing store for HoverLink. This enables animation, styling, binding, etc...
         public static readonly DependencyProperty HoverLinkProperty = DependencyProperty.Register("HoverLink", typeof(string), typeof(HoverLinkBehaviour), new PropertyMetadata(string.Empty));
@@ -24,10 +24,10 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example.Behaviours
         {
             AssociatedObject.StatusMessage -= OnStatusMessageChanged;
         }
-        
+
         private void OnStatusMessageChanged(object sender, StatusMessageEventArgs e)
         {
-            var chromiumWebBrowser = sender as ChromiumWebBrowser;
+            var chromiumWebBrowser = sender as OffscreenChromiumWebBrowser;
             chromiumWebBrowser.Dispatcher.BeginInvoke((Action)(() => HoverLink = e.Value));
         }
     }

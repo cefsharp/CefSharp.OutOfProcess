@@ -4,7 +4,7 @@
 
 using System.Windows;
 
-namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
+namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example
 {
     /// <summary>
     /// Interaction logic for App.xaml

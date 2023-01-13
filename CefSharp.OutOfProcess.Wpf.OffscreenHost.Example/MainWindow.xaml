@@ -1,11 +1,10 @@
-<Window x:Class="CefSharp.OutOfProcess.Wpf.HwndHost.Example.MainWindow"
+<Window x:Class="CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:behaviours="clr-namespace:CefSharp.OutOfProcess.Wpf.HwndHost.Example.Behaviours"
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:hwndhost="clr-namespace:CefSharp.OutOfProcess.Wpf.HwndHost;assembly=CefSharp.OutOfProcess.Wpf.HwndHost"
+        xmlns:offscreenhost="clr-namespace:CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.Behaviours"
         FocusManager.FocusedElement="{Binding ElementName=Browser}"
         mc:Ignorable="d"
         Title="MainWindow" Height="768" Width="1024">
@@ -35,9 +34,9 @@
             <Button Content="Back" Command="{Binding WebBrowser.BackCommand, ElementName=Browser}" Width="50"/>
             <Button Content="Forward" Command="{Binding WebBrowser.ForwardCommand, ElementName=Browser}" Grid.Column="1" Width="60"/>
             <TextBox x:Name="txtBoxAddress" Text="{Binding Address, ElementName=Browser, FallbackValue=www.google.com}" Grid.Column="2" FontSize="12" BorderBrush="Gray" BorderThickness="1">
-                <behaviors:Interaction.Behaviors>
-                    <behaviours:TextBoxBindingUpdateOnEnterBehaviour />
-                </behaviors:Interaction.Behaviors>
+                <!--<behaviors:Interaction.Behaviors>
+                    <offscreenhost:HoverLinkBehaviour />
+                </behaviors:Interaction.Behaviors>-->
             </TextBox>
             <Button Content="Print..." Command="{Binding WebBrowser.PrintCommand, ElementName=Browser}" Grid.Column="3" Width="50" />
             <Button Content="View source" Command="{Binding WebBrowser.ViewSourceCommand, ElementName=Browser}" Grid.Column="4" Width="75" />
@@ -45,12 +44,12 @@
         </Grid>
         <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="0,1">
             <ContentPresenter x:Name="BrowserContentPresenter" />
-            <!--<hwndhost:ChromiumWebBrowser x:Name="Browser"
+            <!--<Offscreenhost:ChromiumWebBrowser x:Name="Browser"
                                     Address="https://www.google.com">
                 <behaviors:Interaction.Behaviors>
                     <behaviours:HoverLinkBehaviour x:Name="HoverLinkBehaviour"/>
                 </behaviors:Interaction.Behaviors>
-            </hwndhost:ChromiumWebBrowser>-->
+            </Offscreenhost:ChromiumWebBrowser>-->
         </Border>
         <ProgressBar IsIndeterminate="{Binding IsLoading, ElementName=Browser}"
                      HorizontalAlignment="Stretch"

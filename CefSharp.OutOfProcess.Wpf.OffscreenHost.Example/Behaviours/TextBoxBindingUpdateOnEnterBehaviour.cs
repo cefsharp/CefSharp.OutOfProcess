@@ -1,9 +1,9 @@
-using System.Windows.Controls;
-using System.Windows.Input;
-using Microsoft.Xaml.Behaviors;
-
-namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example.Behaviours
+namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.Behaviours
 {
+    using System.Windows.Controls;
+    using System.Windows.Input;
+    using Microsoft.Xaml.Behaviors;
+
     public class TextBoxBindingUpdateOnEnterBehaviour : Behavior<TextBox>
     {
         protected override void OnAttached()

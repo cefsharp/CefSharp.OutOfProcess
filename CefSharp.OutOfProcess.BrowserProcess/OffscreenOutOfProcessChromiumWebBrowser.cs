@@ -1,10 +1,8 @@
-﻿using CefSharp.Internals;
+using CefSharp.Internals;
 using System;
 using CefSharp.OutOfProcess.Interface;
-using System.Runtime.InteropServices;
 using CefSharp.Wpf.Internals;
 using CefSharp.Structs;
-using System.IO.MemoryMappedFiles;
 using CefSharp.Enums;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
@@ -14,16 +12,20 @@ namespace CefSharp.OutOfProcess.BrowserProcess
     /// </summary>
     public class OffscreenOutOfProcessChromiumWebBrowser : OutOfProcessChromiumWebBrowser, IRenderWebBrowser
     {
-        public OffscreenOutOfProcessChromiumWebBrowser(IOutOfProcessHostRpc outOfProcessServer, int id, string address = "", IRequestContext requestContext = null, bool offscreenRendering = false)
-          : base(outOfProcessServer, id, address, requestContext, true)
-        {
-        }
+        private readonly RenderHandler renderHandler;
+        private readonly RenderHandler popupRenderHandler;
 
         /// <summary>
         /// The MonitorInfo based on the current hwnd
         /// </summary>
         private MonitorInfoEx monitorInfo;
 
+        public OffscreenOutOfProcessChromiumWebBrowser(IOutOfProcessHostRpc outOfProcessServer, int id, string address = "", IRequestContext requestContext = null)
+          : base(outOfProcessServer, id, address, requestContext, true)
+        {
+            renderHandler = new RenderHandler($"0render_{_id}_");
+            popupRenderHandler = new RenderHandler($"0render_{_id}_popup_");
+        }
 
         /// <summary>
         /// The dpi scale factor, if the browser has already been initialized
@@ -60,7 +62,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 DeviceScaleFactor = DpiScaleFactor,
                 Rect = rect,
-                AvailableRect = availableRect
+                AvailableRect = availableRect,
             };
 
             return screenInfo;
@@ -83,96 +85,33 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         void IRenderWebBrowser.OnPaint(PaintElementType type, Structs.Rect dirtyRect, IntPtr buffer, int width, int height)
         {
-            var dirtyRectCopy = new CefSharp.OutOfProcess.Interface.Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height);
+            var dirtyRectCopy = new Interface.Rect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height);
+            string file = type == PaintElementType.Popup
+                ? popupRenderHandler.OnPaint(buffer, width, height)
+                : renderHandler.OnPaint(buffer, width, height);
 
-            // PixelFormat PixelFormat = PixelFormats.Pbgra32;
-            int BytesPerPixel = 32 / 8;
-            int maximumPixels = 3600 * 2000;// width * height;
-            int maximumNumberOfBytes = maximumPixels * BytesPerPixel;
-
-            bool createNewBitmap = mappedFile == null || currentSize.Height != height || currentSize.Width != width;
-
-            if (createNewBitmap)
-            {
-                //If the MemoryMappedFile is smaller than we need then create a larger one
-                //If it's larger then we need then rather than going through the costly expense of
-                //allocating a new one we'll just use the old one and only access the number of bytes we require.
-                if (viewAccessor == null)
-                {
-                    //  ReleaseMemoryMappedView(ref mappedFile, ref viewAccessor);
-
-                    renderFileName = $"0render_{_id}_{Guid.NewGuid()}";
-                    mappedFile = MemoryMappedFile.CreateNew(renderFileName, maximumNumberOfBytes, MemoryMappedFileAccess.ReadWrite);
-
-                    viewAccessor = mappedFile.CreateViewAccessor(0, maximumNumberOfBytes, MemoryMappedFileAccess.Write);
-                }
-
-                currentSize = new Size(width, height);
-            }
-
-            var usedBytes = width * height * BytesPerPixel;
-
-
-            //{
-            //    Buffer.MemoryCopy(
-            //        viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle().ToPointer(), buffer.ToPointer(),
-            //        (uint)usedBytes,
-            //        maximumNumberOfBytes);
-            //}
-            CopyMemory(viewAccessor.SafeMemoryMappedViewHandle.DangerousGetHandle(), buffer, (uint)usedBytes);
-            viewAccessor.Flush();
-            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, IntPtr.Zero, null, renderFileName);
+            _outofProcessHostRpc.NotifyPaint(Id, type == PaintElementType.Popup, dirtyRectCopy, width, height, file);
         }
-
-        string renderFileName;
-
-        [DllImport("kernel32.dll", EntryPoint = "RtlMoveMemory", ExactSpelling = true)]
-        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
-
-
-        protected void ReleaseMemoryMappedView(ref MemoryMappedFile mappedFile, ref MemoryMappedViewAccessor stream)
-        {
-            if (stream != null)
-            {
-                stream.Dispose();
-                stream = null;
-            }
-
-            if (mappedFile != null)
-            {
-                mappedFile.Dispose();
-                mappedFile = null;
-            }
-        }
-
-        MemoryMappedViewAccessor viewAccessor;
-        MemoryMappedFile mappedFile;
-        Size currentSize;
 
         void IRenderWebBrowser.OnCursorChange(IntPtr cursor, CursorType type, CursorInfo customCursorInfo)
         {
-            // throw new NotImplementedException();
+            // TODO: (CEF)
         }
 
         bool IRenderWebBrowser.StartDragging(IDragData dragData, DragOperationsMask mask, int x, int y)
         {
-            throw new NotImplementedException();
+            // TODO: (CEF)
+            return false;
         }
 
         void IRenderWebBrowser.UpdateDragCursor(DragOperationsMask operation)
         {
-            throw new NotImplementedException();
+            // TODO: (CEF)
         }
 
-        void IRenderWebBrowser.OnPopupShow(bool show)
-        {
-            throw new NotImplementedException();
-        }
+        void IRenderWebBrowser.OnPopupShow(bool show) => _outofProcessHostRpc.OnPopupShow(Id, show);
 
-        void IRenderWebBrowser.OnPopupSize(CefSharp.Structs.Rect rect)
-        {
-            throw new NotImplementedException();
-        }
+        void IRenderWebBrowser.OnPopupSize(CefSharp.Structs.Rect rect) => _outofProcessHostRpc.OnPopupSize(Id, new Interface.Rect(rect.X, rect.Y, rect.Width, rect.Height));
 
         void IRenderWebBrowser.OnImeCompositionRangeChanged(Structs.Range selectedRange, CefSharp.Structs.Rect[] characterBounds)
         {

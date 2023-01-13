@@ -5,7 +5,7 @@
 using System;
 using System.Windows.Input;
 
-namespace CefSharp.OutOfProcess.Wpf.HwndHost.Internals
+namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Internals
 {
     /// <summary>
     /// DelegateCommand
