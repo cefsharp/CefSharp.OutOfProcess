@@ -1,5 +1,4 @@
-﻿using CefSharp.OutOfProcess.Interface;
-using System;
+﻿using System;
 
 namespace CefSharp.OutOfProcess.Internal
 {
@@ -33,10 +32,5 @@ namespace CefSharp.OutOfProcess.Internal
         void SetAddress(string address);
         void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading);
 
-    }
-
-    public interface IRenderHandler
-    {
-        void OnPaint(bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
     }
 }

@@ -131,7 +131,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
 
-            // TODO IF OFFSCREEN
             if (_offscreenRendering && browser is OffscreenOutOfProcessChromiumWebBrowser offscreenBrowser)
             {
                 offscreenBrowser.browserLocation = new System.Drawing.Point(screenX, screenY);

@@ -31,7 +31,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
             Loaded += OnMainWindowLoaded;
         }
 
-        private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+ private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
 
             var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
@@ -39,35 +39,10 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
             _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
 
-        browser = new ChromiumWebBrowser(_outOfProcessHost, "https://google.com");
-            BrowserContentPresenter.Content = browser;
-           // _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
-
-            //   browser = new ChromiumWebBrowser(_outOfProcessHost, "https://google.com");
-            //  BrowserContentPresenter.Content = browser;
-            browser.DevToolsContextAvailable += Browser_DevToolsContextAvailable;
+            BrowserContentPresenter.Content = new ChromiumWebBrowser(_outOfProcessHost, "https://google.com");
         }
 
-        private ChromiumWebBrowser browser;
-
-        private void Browser_DevToolsContextAvailable(object sender, EventArgs e)
-        {
-            Task t = browser.DevToolsContext.ExposeFunctionAsync("Foo", Foo);
-            t.Wait();
-
-            Task tt = browser.DevToolsContext.EvaluateExpressionAsync("Foo()");
-            tt.Wait();
-
-            browser.DevToolsContext.GoToAsync("http://www.sz.de");
-        }
-
-        void Foo()
-        {
-            ;
-        }
-
-
-        private void ShowDevToolsClick(object sender, RoutedEventArgs e)
+         private void ShowDevToolsClick(object sender, RoutedEventArgs e)
         {
             
         }

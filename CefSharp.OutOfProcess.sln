@@ -1,8 +1,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.4.32804.182
+VisualStudioVersion = 17.5.33103.201
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.WinForms.Example", "CefSharp.OutOfProcess.WinForms.Example\CefSharp.OutOfProcess.WinForms.Example.csproj", "{A1C85784-7C6F-4C83-9AC4-B3413F32FF31}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.BrowserProcess", "CefSharp.OutOfProcess.BrowserProcess\CefSharp.OutOfProcess.BrowserProcess.csproj", "{8CB2936D-E12C-4CD2-9044-F264D6F0547B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.WinForms", "CefSharp.OutOfProcess.WinForms\CefSharp.OutOfProcess.WinForms.csproj", "{8287C019-2720-47D5-8077-1A2DADB510E6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Core", "CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj", "{6ED4E6BF-F43A-429C-87FD-E66203EEC348}"
 EndProject
@@ -12,9 +16,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.H
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.HwndHost.Example", "CefSharp.OutOfProcess.Wpf.HwndHost.Example\CefSharp.OutOfProcess.Wpf.HwndHost.Example.csproj", "{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.OffscreenHost", "CefSharp.OutOfProcess.Wpf.OffscreenHost\CefSharp.OutOfProcess.Wpf.OffscreenHost.csproj", "{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.Dom.OutOfProcess", "CefSharp.Dom\lib\PuppeteerSharp\CefSharp.Dom.OutOfProcess.csproj", "{7D39CC02-FB02-4F03-B329-E5DB567EC354}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.OffscreenHost.Example", "CefSharp.OutOfProcess.Wpf.OffscreenHost.Example\CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.csproj", "{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.OffscreenHost", "CefSharp.OutOfProcess.Wpf.OffscreenHost\CefSharp.OutOfProcess.Wpf.OffscreenHost.csproj", "{04A51458-0957-4A1D-98DF-8BB5E9887B09}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Wpf.OffscreenHost.Example", "CefSharp.OutOfProcess.Wpf.OffscreenHost.Example\CefSharp.OutOfProcess.Wpf.OffscreenHost.Example.csproj", "{E61E72F2-4FFE-4E86-8BDC-F176796D8034}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -22,10 +28,18 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1C85784-7C6F-4C83-9AC4-B3413F32FF31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1C85784-7C6F-4C83-9AC4-B3413F32FF31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1C85784-7C6F-4C83-9AC4-B3413F32FF31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1C85784-7C6F-4C83-9AC4-B3413F32FF31}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8CB2936D-E12C-4CD2-9044-F264D6F0547B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8CB2936D-E12C-4CD2-9044-F264D6F0547B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CB2936D-E12C-4CD2-9044-F264D6F0547B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CB2936D-E12C-4CD2-9044-F264D6F0547B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8287C019-2720-47D5-8077-1A2DADB510E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8287C019-2720-47D5-8077-1A2DADB510E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8287C019-2720-47D5-8077-1A2DADB510E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8287C019-2720-47D5-8077-1A2DADB510E6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6ED4E6BF-F43A-429C-87FD-E66203EEC348}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -42,14 +56,18 @@ Global
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{329D005F-3E63-4D0B-A86F-15CDD9F9AF2E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DDE8154C-C2CF-4BEE-A35B-CC4187D4C7B1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38BA99D6-B3F5-4FD5-8E19-479B80E5A5C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04A51458-0957-4A1D-98DF-8BB5E9887B09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04A51458-0957-4A1D-98DF-8BB5E9887B09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04A51458-0957-4A1D-98DF-8BB5E9887B09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04A51458-0957-4A1D-98DF-8BB5E9887B09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E61E72F2-4FFE-4E86-8BDC-F176796D8034}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E61E72F2-4FFE-4E86-8BDC-F176796D8034}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E61E72F2-4FFE-4E86-8BDC-F176796D8034}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E61E72F2-4FFE-4E86-8BDC-F176796D8034}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
