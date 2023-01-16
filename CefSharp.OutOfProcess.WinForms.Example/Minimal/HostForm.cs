@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Windows.Forms;
 
@@ -15,7 +15,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 #if NETCOREAPP3_1_OR_GREATER
         private string _targetFramework = "netcoreapp3.1";
 #else
-        private string _targetFramework = "net462";
+        private string _targetFramework = "net472";
 #endif
         private OutOfProcessHost _outOfProcessHost;
 

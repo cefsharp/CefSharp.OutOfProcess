@@ -11,7 +11,7 @@ namespace CefSharp.OutOfProcess.WinForms
         public bool IsClosed { get; private set; }
         public OutOfProcessHost OutOfProcessHost { get; }
 
-        public event EventHandler<MessageReceivedEventArgs> MessageReceived; 
+        public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<MessageErrorEventArgs> MessageError;
         public event EventHandler Disconnected;
 
