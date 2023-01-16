@@ -326,7 +326,7 @@ namespace CefSharp.OutOfProcess
             _outOfProcessClient.UpdateRequestContextPreferences(browserId, pref);
         }
 
-        public static Task<OutOfProcessHost> CreateAsync(string path = HostExeName, string cachePath = null)
+        public static Task<OutOfProcessHost> CreateAsync(string path = HostExeName, bool offScreenRendering = false, string cachePath = null)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -340,7 +340,7 @@ namespace CefSharp.OutOfProcess
                 throw new FileNotFoundException("Unable to find Host executable.", path);
             }
 
-            var host = new OutOfProcessHost(fullPath, cachePath, true);
+            var host = new OutOfProcessHost(fullPath, cachePath, offScreenRendering);
 
             host.Init();
 

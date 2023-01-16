@@ -1,14 +1,15 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net472</TargetFrameworks>
     <UseWPF>true</UseWPF>
+    <IsPackable>true</IsPackable>
     <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CefSharp.Dom" Version="2.0.86" />
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
     <PackageReference Include="PInvoke.User32" Version="0.7.124" />
-    <PackageReference Include="StreamJsonRpc" Version="2.13.33" /> 
+    <PackageReference Include="StreamJsonRpc" Version="2.13.33" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj" />

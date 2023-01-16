@@ -6,7 +6,6 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -23,7 +22,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 #if NETCOREAPP3_1_OR_GREATER
         private string _targetFramework = "netcoreapp3.1";
 #else
-        private string _targetFramework = "net462";
+        private string _targetFramework = "net472";
 #endif
 
         private const string DefaultUrlForAddedTabs = "https://www.google.com";
@@ -62,7 +61,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
             outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
-            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
+            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, false, cachePath);
 
             AddTab(DefaultUrlForAddedTabs);
         }
@@ -385,7 +384,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
         {
             var control = GetCurrentTabControl();
 
-            if(control == null)
+            if (control == null)
             {
                 return;
             }

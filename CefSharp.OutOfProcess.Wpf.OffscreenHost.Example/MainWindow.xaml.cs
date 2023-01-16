@@ -39,7 +39,7 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example
             outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
 
-            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
+            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, true, cachePath);
 
             browser = new OffscreenChromiumWebBrowser(_outOfProcessHost, "https://google.com");
             BrowserContentPresenter.Content = browser;
@@ -61,7 +61,7 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example
             Task tt = browser.DevToolsContext.EvaluateExpressionAsync("Foo()");
             tt.Wait();
 
-            browser.DevToolsContext.GoToAsync("http://www.bing.com");
+            browser.DevToolsContext.GoToAsync("http://www.sz.de");
         }
 
         void Foo()

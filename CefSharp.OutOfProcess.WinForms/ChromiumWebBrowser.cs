@@ -121,11 +121,11 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         public Frame MainFrame => _devToolsContext == null ? null : _devToolsContext.MainFrame;
 
-        public IDialogHandler DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        public IJsDialogHandler JsDialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        Handler.IDialogHandler IChromiumWebBrowser.DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        Handler.IJsDialogHandler IChromiumWebBrowser.JsDialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        Handler.IDownloadHandler IChromiumWebBrowser.DownloadHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IDialogHandler DialogHandler { get; set; }
+        public IJsDialogHandler JsDialogHandler { get; set; }
+        Handler.IDialogHandler IChromiumWebBrowser.DialogHandler { get; set; }
+        Handler.IJsDialogHandler IChromiumWebBrowser.JsDialogHandler { get; set; }
+        Handler.IDownloadHandler IChromiumWebBrowser.DownloadHandler { get; set; }
 
         /// <inheritdoc/>
         protected override void OnHandleCreated(EventArgs e)

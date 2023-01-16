@@ -1,5 +1,6 @@
-﻿using CefSharp.Dom.Transport;
+using CefSharp.Dom.Transport;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.WinForms
@@ -22,7 +23,7 @@ namespace CefSharp.OutOfProcess.WinForms
 
         void IDisposable.Dispose()
         {
-            
+
         }
 
         public void InvokeMessageReceived(string message)
@@ -37,7 +38,7 @@ namespace CefSharp.OutOfProcess.WinForms
 
         public void StopReading()
         {
-            
+
         }
     }
 }
