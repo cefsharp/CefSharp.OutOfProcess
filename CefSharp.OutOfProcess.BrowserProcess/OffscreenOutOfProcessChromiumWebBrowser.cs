@@ -33,6 +33,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// browser to be notified of the change.
         /// </summary>
         public float DpiScaleFactor { get; set; } = 1;
+
         public System.Drawing.Point browserLocation { get; internal set; }
 
         public CefSharp.Structs.Rect viewRect { get; internal set; }
