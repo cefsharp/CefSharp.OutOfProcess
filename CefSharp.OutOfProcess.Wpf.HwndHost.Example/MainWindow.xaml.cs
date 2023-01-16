@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
@@ -19,7 +18,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
 #if NETCOREAPP3_1_OR_GREATER
         private string _targetFramework = "netcoreapp3.1";
 #else
-        private string _targetFramework = "net462";
+        private string _targetFramework = "net472";
 #endif
 
         private OutOfProcessHost _outOfProcessHost;
@@ -31,20 +30,20 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
             Loaded += OnMainWindowLoaded;
         }
 
- private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+        private async void OnMainWindowLoaded(object sender, RoutedEventArgs e)
         {
 
             var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
             outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
             _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
-
             BrowserContentPresenter.Content = new ChromiumWebBrowser(_outOfProcessHost, "https://google.com");
         }
 
-         private void ShowDevToolsClick(object sender, RoutedEventArgs e)
+
+        private void ShowDevToolsClick(object sender, RoutedEventArgs e)
         {
-            
+
         }
     }
 }

@@ -5,6 +5,7 @@
     <TargetFrameworks>net472</TargetFrameworks>
     <RootNamespace>CefSharp.OutOfProcess.Wpf.HwndHost.Example</RootNamespace>
     <StartupObject>CefSharp.OutOfProcess.Wpf.HwndHost.Example.App</StartupObject>
+    <CefSharpAnyCpuSupport>true</CefSharpAnyCpuSupport>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
@@ -14,5 +15,4 @@
   <ItemGroup>
     <ProjectReference Include="..\CefSharp.OutOfProcess.Wpf.HwndHost\CefSharp.OutOfProcess.Wpf.HwndHost.csproj" />
   </ItemGroup>
-
 </Project>

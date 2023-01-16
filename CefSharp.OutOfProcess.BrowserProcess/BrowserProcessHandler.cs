@@ -1,4 +1,4 @@
-﻿namespace CefSharp.OutOfProcess.BrowserProcess
+namespace CefSharp.OutOfProcess.BrowserProcess
 {
     using System;
     using System.Collections.Generic;

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
     <TargetFrameworks>netcoreapp3.1;net472</TargetFrameworks>
@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
     <PackageReference Include="PInvoke.User32" Version="0.7.124" />
-    <PackageReference Include="StreamJsonRpc" Version="2.12.27" />
+    <PackageReference Include="StreamJsonRpc" Version="2.13.33" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,5 +19,4 @@
   <ItemGroup>
     <Compile Update="ChromiumWebBrowser.cs" />
   </ItemGroup>
-
 </Project>

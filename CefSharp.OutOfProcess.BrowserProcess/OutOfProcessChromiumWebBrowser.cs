@@ -1,4 +1,4 @@
-﻿using CefSharp.Internals;
+using CefSharp.Internals;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
@@ -368,13 +368,13 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var devToolsClient = browser.GetDevToolsClient();
 
-            //TODO: Do we need perforamnce and Log enabled?
             var devToolsEnableTask = Task.WhenAll(devToolsClient.Page.EnableAsync(),
                 devToolsClient.Page.SetLifecycleEventsEnabledAsync(true),
-                devToolsClient.Runtime.EnableAsync(),
-                devToolsClient.Network.EnableAsync(),
-                devToolsClient.Performance.EnableAsync(),
-                devToolsClient.Log.EnableAsync());
+                devToolsClient.Runtime.EnableAsync()
+                //devToolsClient.Network.EnableAsync(),
+                // devToolsClient.Performance.EnableAsync(),
+                // devToolsClient.Log.EnableAsync()
+                );
 
             _ = devToolsEnableTask.ContinueWith(t =>
             {
@@ -451,7 +451,10 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <inheritdoc/>
         public void LoadUrl(string url)
         {
-            throw new NotImplementedException();
+            using (var frame = _browser.MainFrame)
+            {
+                frame.LoadUrl(url);
+            }
         }
 
         /// <inheritdoc/>
@@ -774,7 +777,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             //the user has override CreateBrowserWindowInfo and not called base.CreateBrowserWindowInfo
             _removeExNoActivateStyle = !windowInfo.WindowlessRenderingEnabled && (windowInfo.ExStyle & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE;
 
-            //TODO: We need some sort of timeout and
+            //TODO: (CEF) We need some sort of timeout and
             //if we use the same approach for WPF/WinForms then
             //we need to move the common code into the partial class
             GlobalContextInitialized.ExecuteOrEnqueue((success) =>
@@ -814,7 +817,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         public IPermissionHandler PermissionHandler { get; set; }
 
         /// <summary>
-        /// TODO: Improve focus
+        /// TODO: (CEF) Improve focus
         /// Has Focus 
         /// </summary>
         /// <returns>returns false</returns>

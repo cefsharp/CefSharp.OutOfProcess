@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -282,13 +282,13 @@ namespace CefSharp.OutOfProcess.WinForms
             ctx.LifecycleEvent += LifecycleEvent;
 
             _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
-            {
-                _devToolsReady = true;
+                {
+                    _devToolsReady = true;
 
-                DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
+                    DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
 
-                //NOW the user can start using the devtools context
-            }, TaskScheduler.Current);
+                    //NOW the user can start using the devtools context
+                }, TaskScheduler.Current);
         }
 
         /// <inheritdoc/>

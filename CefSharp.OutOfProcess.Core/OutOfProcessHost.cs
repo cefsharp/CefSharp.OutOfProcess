@@ -1,4 +1,4 @@
-﻿namespace CefSharp.OutOfProcess
+namespace CefSharp.OutOfProcess
 {
     using CefSharp.DevTools.Page;
     using CefSharp.OutOfProcess.Interface;

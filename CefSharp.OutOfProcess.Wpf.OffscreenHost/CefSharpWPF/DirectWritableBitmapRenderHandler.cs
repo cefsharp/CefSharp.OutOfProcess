@@ -1,23 +1,25 @@
-// Copyright © 2019 The CefSharp Authors. All rights reserved.
+// Copyright © 2020 The CefSharp Authors. All rights reserved.
 //
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-using System;
-using System.IO.MemoryMappedFiles;
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
-using Rect = CefSharp.OutOfProcess.Interface.Rect;
+//NOTE:Classes in the CefSharp.Core namespace have been hidden from intellisnse so users don't use them directly
 
 namespace CefSharp.Wpf.Rendering
 {
+    using System;
+    using System.IO.MemoryMappedFiles;
+    using System.Runtime.InteropServices;
+    using System.Windows;
+    using System.Windows.Controls;
+    using System.Windows.Media;
+    using System.Windows.Media.Imaging;
+    using System.Windows.Threading;
+    using Rect = CefSharp.OutOfProcess.Interface.Rect;
+
     /// <summary>
     /// DirectWritableBitmapRenderHandler - directly copyies the buffer
     /// into writeableBitmap.BackBuffer. No additional copies or locking are used.
-    /// Can only be used when CEF UI thread and WPF UI thread are the same (MultiThreadedMessageLoop = false)
+    /// Can only be used when CEF UI thread and WPF UI thread are the same (MultiThreadedMessageLoop = false).
     /// </summary>
     public sealed class DirectWritableBitmapRenderHandler : IDisposable
     {
@@ -34,8 +36,8 @@ namespace CefSharp.Wpf.Rendering
         /// </summary>
         /// <param name="dpiX">The dpi x.</param>
         /// <param name="dpiY">The dpi y.</param>
-        /// <param name="invalidateDirtyRect">if true then only the direct rectangle will be updated, otherwise the whole bitmap will be redrawn</param>
-        /// <param name="dispatcherPriority">priority at which the bitmap will be updated on the UI thread</param>
+        /// <param name="invalidateDirtyRect">if true then only the direct rectangle will be updated, otherwise the whole bitmap will be redrawn.</param>
+        /// <param name="dispatcherPriority">priority at which the bitmap will be updated on the UI thread.</param>
         public DirectWritableBitmapRenderHandler(double dpiX, double dpiY, bool invalidateDirtyRect = false, DispatcherPriority dispatcherPriority = DispatcherPriority.Render)
         {
             this.dpiX = dpiX;
@@ -43,6 +45,14 @@ namespace CefSharp.Wpf.Rendering
             this.invalidateDirtyRect = invalidateDirtyRect;
         }
 
+        /// <summary>
+        /// Is called when source bitmap updates and transfers the content to the image control.
+        /// </summary>
+        /// <param name="dirtyRect">if only a part has been rerendered, this rect defines the rerendered subpart.</param>
+        /// <param name="width">width of the bitmap.</param>
+        /// <param name="height">height of the bitmap.</param>
+        /// <param name="image">image to be paint on.</param>
+        /// <param name="file">filename of a memorymappedfile containing the bitmap to be paint.</param>
         public void OnPaint(Rect dirtyRect, int width, int height, Image image, string file)
         {
             const int sizeInfoOffset = 2 * sizeof(int);
@@ -54,7 +64,7 @@ namespace CefSharp.Wpf.Rendering
                 {
                     mappedFile.Dispose();
                     mappedFile = null;
-                    viewAccessor.Dispose();
+                    viewAccessor?.Dispose();
                     viewAccessor = null;
                 }
 
@@ -86,10 +96,9 @@ namespace CefSharp.Wpf.Rendering
             stride = data_width * 4;
             noOfBytes = stride * data_height;
 
-            var writeableBitmap = image.Source as WriteableBitmap;
-            if (writeableBitmap == null || writeableBitmap.PixelWidth != data_width || writeableBitmap.PixelHeight != data_height)
+            if (!(image.Source is WriteableBitmap writeableBitmap) || writeableBitmap.PixelWidth != data_width || writeableBitmap.PixelHeight != data_height)
             {
-                image.Source = writeableBitmap = new WriteableBitmap(data_width, data_height, dpiX, dpiY, PixelFormats.Pbgra32, null);
+                image.SetCurrentValue(Image.SourceProperty, writeableBitmap = new WriteableBitmap(data_width, data_height, dpiX, dpiY, PixelFormats.Pbgra32, null));
             }
 
             if (writeableBitmap != null)
@@ -119,6 +128,7 @@ namespace CefSharp.Wpf.Rendering
             }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (mappedFile != null)

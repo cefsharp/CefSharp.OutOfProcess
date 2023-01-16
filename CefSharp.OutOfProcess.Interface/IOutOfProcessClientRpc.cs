@@ -1,4 +1,4 @@
-﻿namespace CefSharp.OutOfProcess.Interface
+namespace CefSharp.OutOfProcess.Interface
 {
     using System;
     using System.Collections.Generic;

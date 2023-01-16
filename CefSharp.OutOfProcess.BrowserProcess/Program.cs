@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using CefSharp.Internals;
@@ -14,7 +14,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             Cef.EnableHighDPISupport();
 
-            //Debugger.Launch();
+            // Debugger.Launch();
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
             var cachePath = CommandLineArgsParser.GetArgumentValue(args, "--cachePath");
@@ -29,6 +29,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 WindowlessRenderingEnabled = offscreenRendering,
                 MultiThreadedMessageLoop = false
             };
+
+            //// // too slow when webgl is used
+            ////if (offscreenRendering)
+            ////{
+            ////    settings.SetOffScreenRenderingBestPerformanceArgs();
+            ////}
 
             var browserProcessHandler = new BrowserProcessHandler(parentProcessId, offscreenRendering);
 
