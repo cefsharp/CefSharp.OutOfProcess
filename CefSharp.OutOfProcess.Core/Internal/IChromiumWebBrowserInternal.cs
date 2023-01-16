@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CefSharp.OutOfProcess.Internal
 {
@@ -28,9 +28,7 @@ namespace CefSharp.OutOfProcess.Internal
 
         void SetStatusMessage(string msg);
         void SetTitle(string title);
-
         void SetAddress(string address);
         void SetLoadingStateChange(bool canGoBack, bool canGoForward, bool isLoading);
-
     }
 }

@@ -203,5 +203,10 @@ namespace CefSharp.OutOfProcess
         /// the navigation will resolve with the response of the last redirect. If can not go forward, resolves to null.</returns>
         /// <param name="options">Navigation parameters.</param>
         Task<Response> GoForwardAsync(NavigationOptions options = null);
+        Handler.IDialogHandler DialogHandler { get; set; }
+
+        Handler.IJsDialogHandler JsDialogHandler { get; set; }
+
+        Handler.IDownloadHandler DownloadHandler { get; set; }
     }
 }

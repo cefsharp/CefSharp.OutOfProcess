@@ -66,7 +66,7 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <param name="initialAddress">address that will be initially loaded in the browser</param>
         public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
         {
-            if(host == null)
+            if (host == null)
             {
                 throw new ArgumentNullException(nameof(host));
             }
@@ -121,12 +121,16 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         public Frame MainFrame => _devToolsContext == null ? null : _devToolsContext.MainFrame;
 
+        public IDialogHandler DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IJsDialogHandler JsDialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Handler.IDialogHandler IChromiumWebBrowser.DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Handler.IJsDialogHandler IChromiumWebBrowser.JsDialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Handler.IDownloadHandler IChromiumWebBrowser.DownloadHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         /// <inheritdoc/>
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-
-            var size = Size;
 
             _host.CreateBrowser(this, Handle, url: _initialAddress, out _id);
 
@@ -141,7 +145,7 @@ namespace CefSharp.OutOfProcess.WinForms
         {
             base.Dispose(disposing);
 
-            if(disposing)
+            if (disposing)
             {
                 _devToolsContext.DOMContentLoaded -= DOMContentLoaded;
                 _devToolsContext.Error -= BrowserProcessCrashed;
@@ -278,13 +282,13 @@ namespace CefSharp.OutOfProcess.WinForms
             ctx.LifecycleEvent += LifecycleEvent;
 
             _ = ctx.InvokeGetFrameTreeAsync().ContinueWith(t =>
-                {
-                    _devToolsReady = true;
+            {
+                _devToolsReady = true;
 
-                    DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
+                DevToolsContextAvailable?.Invoke(this, EventArgs.Empty);
 
-                    //NOW the user can start using the devtools context
-                }, TaskScheduler.Current);
+                //NOW the user can start using the devtools context
+            }, TaskScheduler.Current);
         }
 
         /// <inheritdoc/>

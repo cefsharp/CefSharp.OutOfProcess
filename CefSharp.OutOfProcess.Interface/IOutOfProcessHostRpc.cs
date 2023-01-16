@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using CefSharp.OutOfProcess.Interface.Callbacks;
 
 namespace CefSharp.OutOfProcess.Interface
 {
@@ -69,7 +71,7 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="browserId">browser Id</param>
         /// <param name="title">title</param>
         void NotifyTitleChanged(int browserId, string title);
-        
+
         /// <summary>
         /// Context has been initialized in the Remote Host (Browser Process)
         /// </summary>
@@ -79,6 +81,37 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="chromiumVersion">Chromium Version</param>
         void NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion);
 
-        void NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, IntPtr buffer, byte[] data, string file);
+        void NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, string file);
+
+        void OnPopupShow(int browserId, bool show);
+
+        void OnPopupSize(int browserId, Rect rect);
+
+        /* DialogHandler */
+        Task<bool> OnFileDialog(int browserId, string mode, string title, string defaultFilePath, string[] acceptFilters, int callback);
+
+        event EventHandler<FileDialogCallbackDetails> FileDialogCallback;
+
+        /////* JSDialogHandler */
+
+        Task<bool> OnBeforeUnloadDialog(int browserId, string messageText, bool isReload, int callback);
+
+        void OnDialogClosed(int browserId);
+
+        // TODO: (CEF) no by ref for supress message
+        Task<bool> OnJSDialog(int browserId, string originUrl, string dialogType, string messageText, string defaultPromptText, int callback, bool suppressMessage);
+
+        void OnResetDialogState(int browserId);
+
+        event EventHandler<JsDialogCallbackDetails> JsDialogCallback;
+
+        Task<bool> OnCanDownloadAsync(int browserId, string url, string requestMethod);
+
+        void OnBeforeDownload(int browserId, DownloadItem downloadItem, int callback);
+
+        void OnDownloadUpdated(int browserId, DownloadItem downloadItem, int callback);
+
+        event EventHandler<BeforeDownloadCallbackDetails> BeforeDownloadCallback;
+        event EventHandler<DownloadCallbackDetails> DownloadCallback;
     }
 }

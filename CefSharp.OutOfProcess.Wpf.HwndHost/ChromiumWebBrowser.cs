@@ -1064,6 +1064,12 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             set { SetValue(WebBrowserProperty, value); }
         }
 
+        public IDialogHandler DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public IJsDialogHandler JsDialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Handler.IDialogHandler IChromiumWebBrowser.DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Handler.IJsDialogHandler IChromiumWebBrowser.JsDialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        Handler.IDownloadHandler IChromiumWebBrowser.DownloadHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         /// <summary>
         /// The WebBrowser property
         /// </summary>
