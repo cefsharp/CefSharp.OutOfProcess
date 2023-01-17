@@ -41,34 +41,10 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example
 
             _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, true, cachePath);
 
-            browser = new OffscreenChromiumWebBrowser(_outOfProcessHost, "https://google.com");
+            var browser = new OffscreenChromiumWebBrowser(_outOfProcessHost, "https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select");
             BrowserContentPresenter.Content = browser;
 
-            // _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
-
-            //   browser = new ChromiumWebBrowser(_outOfProcessHost, "https://google.com");
-            //  BrowserContentPresenter.Content = browser;
-            browser.DevToolsContextAvailable += Browser_DevToolsContextAvailable;
         }
-
-        private OffscreenChromiumWebBrowser browser;
-
-        private void Browser_DevToolsContextAvailable(object sender, EventArgs e)
-        {
-            Task t = browser.DevToolsContext.ExposeFunctionAsync("Foo", Foo);
-            t.Wait();
-
-            Task tt = browser.DevToolsContext.EvaluateExpressionAsync("Foo()");
-            tt.Wait();
-
-            browser.DevToolsContext.GoToAsync("http://www.sz.de");
-        }
-
-        void Foo()
-        {
-            ;
-        }
-
 
         private void ShowDevToolsClick(object sender, RoutedEventArgs e)
         {
