@@ -1237,10 +1237,10 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
         /// <param name="e">The <see cref="T:System.Windows.Input.KeyEventArgs" /> that contains the event data.</param>
         protected override void OnPreviewKeyUp(KeyEventArgs e)
         {
-            //if (!e.Handled && DevToolsContext != null)
-            //{
-            //    HandleKeyPress(e);
-            //}
+            if (!e.Handled && DevToolsContext != null)
+            {
+                HandleKeyPress(e);
+            }
 
             base.OnPreviewKeyUp(e);
         }
@@ -1259,24 +1259,12 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
             base.OnPreviewTextInput(e);
         }
 
-        private async void HandleKeyPress(KeyEventArgs e)
+        private void HandleKeyPress(KeyEventArgs e)
         {
             var key = e.SystemKey == Key.None ? e.Key : e.SystemKey;
             if (DevToolsContext == null)
             {
                 return;
-            }
-
-            try
-            {
-                if (KeyMapping.ContainsKey(e.Key.ToString()))
-                {
-                    await DevToolsContext.Keyboard.PressAsync(KeyMapping[e.Key.ToString()]);
-                }
-            }
-            catch (KeyNotFoundException ex)
-            {
-                Debug.WriteLine(e.Key.ToString() + " not found");
             }
 
             // Hooking the Tab key like this makes the tab focusing in essence work like
@@ -1288,6 +1276,18 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
                                || (key == Key.A && Keyboard.Modifiers == ModifierKeys.Control))
             {
                 e.Handled = true;
+            }
+
+            if (KeyMapping.ContainsKey(e.Key.ToString()))
+            {
+                if (e.IsDown)
+                {
+                    DevToolsContext.Keyboard.DownAsync(KeyMapping[e.Key.ToString()]);
+                }
+                else
+                {
+                    DevToolsContext.Keyboard.UpAsync(KeyMapping[e.Key.ToString()]);
+                }
             }
         }
 
