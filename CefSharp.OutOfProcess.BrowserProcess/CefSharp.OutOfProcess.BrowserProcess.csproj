@@ -9,7 +9,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <LangVersion>Latest</LangVersion>
-    <!--<CefSharpBuildAction>NoAction</CefSharpBuildAction>-->
+    <!--we need it here to copy (CEF) Standard Binary Distribution for Windows.-->
+    <!--According to CefSharp.Common (108.4.130)\build\CefSharp.Common.targets )-->
+    <CefSharpBuildAction>None</CefSharpBuildAction>
   </PropertyGroup>
 
   <ItemGroup>

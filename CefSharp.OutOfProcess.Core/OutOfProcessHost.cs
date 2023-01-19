@@ -115,6 +115,11 @@ namespace CefSharp.OutOfProcess
             return _outOfProcessClient.ShowDevTools(browserId);
         }
 
+        public void SendMouseClickEvent(int browserId, int x, int y, MouseButtonType mouseButtonType, bool mouseUp, int clickCount, CefEventFlags eventFlags)
+        {
+            _outOfProcessClient.SendMouseClickEvent(browserId, x, y, mouseButtonType.ToString(), mouseUp, clickCount, (uint)eventFlags);
+        }
+
         public Task LoadUrl(int browserId, string url)
         {
             return _outOfProcessClient.LoadUrl(browserId, url);
@@ -312,6 +317,7 @@ namespace CefSharp.OutOfProcess
         public void CloseBrowser(int id)
         {
             _ = _outOfProcessClient.CloseBrowser(id);
+            _browsers.TryRemove(id, out var browser);
         }
 
         public void Dispose()

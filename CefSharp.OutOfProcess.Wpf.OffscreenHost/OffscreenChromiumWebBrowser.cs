@@ -330,7 +330,6 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
             var connection = DevToolsConnection.Attach(_devToolsContextConnectionTransport);
             _devToolsContext = Dom.DevToolsContext.CreateForOutOfProcess(connection);
         }
-
         protected void ShowDevTools() => _host.ShowDevTools(_id);
 
         /// <inheritdoc/>
@@ -490,6 +489,7 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
         ///<inheritdoc/>
         protected override void OnGotKeyboardFocus(KeyboardFocusChangedEventArgs e)
         {
+            ////Debug.WriteLine($"OnGotKeyboardFocus from {e.OldFocus} to {e.NewFocus}. IsHandled: {e.Handled} Souce: {e.Source} OriginalSouce: {e.OriginalSource}");
             if (!e.Handled)
             {
                 if (InternalIsBrowserInitialized())
@@ -508,6 +508,8 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
         ///<inheritdoc/>
         protected override void OnLostKeyboardFocus(KeyboardFocusChangedEventArgs e)
         {
+            ////Debug.WriteLine($"OnLostKeyboardFocus from {e.OldFocus} to {e.NewFocus}. IsHandled: {e.Handled} Souce: {e.Source} OriginalSouce: {e.OriginalSource}");
+
             if (!e.Handled)
             {
                 if (InternalIsBrowserInitialized())
@@ -534,10 +536,14 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
         private void InternalDispose(bool disposing)
         {
             Interlocked.Exchange(ref _browserInitialized, 0);
+            Interlocked.Exchange(ref _disposeSignaled, 1);
 
             if (disposing)
             {
                 _renderHandler?.Dispose();
+                _popupRenderHandler?.Dispose();
+
+                _host.CloseBrowser(_id);
 
                 SizeChanged -= OnSizeChanged;
                 IsVisibleChanged -= OnIsVisibleChanged;
@@ -551,7 +557,6 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
                     _sourceWindow.LocationChanged -= OnWindowLocationChanged;
                     _sourceWindow = null;
                 }
-
 
                 UiThreadRunAsync(() =>
                 {
@@ -620,7 +625,7 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
                     // Only call Load if initialAddress is null and Address is not empty
                     if (string.IsNullOrEmpty(_initialAddress) && !string.IsNullOrEmpty(Address))
                     {
-                       LoadUrl(Address);
+                        LoadUrl(Address);
                     }
                 }
             });
@@ -1000,13 +1005,14 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
 
         protected virtual void Dispose(bool isDisposing)
         {
+            InternalDispose(isDisposing);
         }
 
         void IRenderHandlerInternal.OnPaint(bool isPopup, Interface.Rect directRect, int width, int height, string file)
         {
             const int DefaultDpi = 96;
             var scale = DefaultDpi * 1.0;
-            if (_renderHandler == null)
+            if (_renderHandler == null && !IsDisposed)
             {
                 _renderHandler = new DirectWritableBitmapRenderHandler(scale, scale);
                 _popupRenderHandler = new DirectWritableBitmapRenderHandler(scale, scale);
@@ -1016,11 +1022,11 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
             {
                 if (isPopup)
                 {
-                    _popupRenderHandler.OnPaint(directRect, width, height, popupImage, file);
+                    _popupRenderHandler?.OnPaint(directRect, width, height, popupImage, file);
                 }
                 else
                 {
-                    _renderHandler.OnPaint(directRect, width, height, image, file);
+                    _renderHandler?.OnPaint(directRect, width, height, image, file);
                 }
 
                 InvalidateVisual();
@@ -1107,8 +1113,8 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
             if (e.StylusDevice == null)
             {
                 Focus();
-                await DevToolsContext.Mouse
-                       .DownAsync(new Dom.Input.ClickOptions() { Button = e.GetButton(), ClickCount = e.ClickCount });
+
+                OnMouseButton(e);
 
                 //We should only need to capture the left button exiting the browser
                 if (e.ChangedButton == MouseButton.Left && e.LeftButton == MouseButtonState.Pressed)
@@ -1143,8 +1149,7 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
             //Use e.StylusDevice == null to ensure only mouse.
             if (e.StylusDevice == null)
             {
-                await _devToolsContext.Mouse
-                    .UpAsync(new Dom.Input.ClickOptions() { Button = e.GetButton(), ClickCount = e.ClickCount });
+                OnMouseButton(e);
 
                 if (e.ChangedButton == MouseButton.Left && e.LeftButton == MouseButtonState.Released)
                 {
@@ -1308,6 +1313,34 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
             }
 
             e.Handled = true;
+        }
+
+
+        /// <summary>
+        /// Handles the <see cref="E:MouseButton" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="MouseButtonEventArgs"/> instance containing the event data.</param>
+        private void OnMouseButton(MouseButtonEventArgs e)
+        {
+            if (!e.Handled && _devToolsReady)
+            {
+                var mouseUp = e.ButtonState == MouseButtonState.Released;
+                var point = e.GetPosition(this);
+
+                //// Chromium only supports values of 1, 2 or 3.
+                //// https://github.com/cefsharp/CefSharp/issues/3940
+                //// Anything greater than 3 then we send click count of 1
+                var clickCount = e.ClickCount;
+
+                if (clickCount > 3)
+                {
+                    clickCount = 1;
+                }
+
+                _host.SendMouseClickEvent(_id, (int)point.X, (int)point.Y, (MouseButtonType)e.ChangedButton, mouseUp, clickCount, e.GetModifiers());
+
+                e.Handled = true;
+            }
         }
 
         #endregion

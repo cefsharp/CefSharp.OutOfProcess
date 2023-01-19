@@ -60,14 +60,8 @@ namespace CefSharp.Wpf.Rendering
             var noOfBytes = stride * height;
             if (currentFile != file)
             {
-                if (mappedFile != null)
-                {
-                    mappedFile.Dispose();
-                    mappedFile = null;
-                    viewAccessor?.Dispose();
-                    viewAccessor = null;
-                }
-
+                viewAccessor?.Dispose();
+                mappedFile?.Dispose();
                 try
                 {
                     mappedFile = MemoryMappedFile.OpenExisting(file);
@@ -131,11 +125,8 @@ namespace CefSharp.Wpf.Rendering
         /// <inheritdoc/>
         public void Dispose()
         {
-            if (mappedFile != null)
-            {
-                mappedFile.Dispose();
-                viewAccessor.Dispose();
-            }
+            viewAccessor?.Dispose();
+            mappedFile?.Dispose();
         }
     }
 }

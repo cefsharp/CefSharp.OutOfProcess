@@ -62,5 +62,18 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
         void SetFocus(int browserId, bool focus);
+
+        /// <summary>
+        /// Sends a mouse click to the client.
+        /// Custom implementation necessary because IDevToolsContext can't handle clicks on popups
+        /// </summary>
+        /// <param name="browserId"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="mouseButtonType"></param>
+        /// <param name="mouseUp"></param>
+        /// <param name="clickCount"></param>
+        /// <param name="eventFlags"></param>
+        void SendMouseClickEvent(int browserId, int x, int y, string mouseButtonType, bool mouseUp, int clickCount, uint eventFlags);
     }
 }

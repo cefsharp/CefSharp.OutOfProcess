@@ -186,14 +186,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId, int width, int height, int screenX, int screenY)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+            var browser = GetBrowser(browserId);
+            if(browser == null)
+            {
+                return;
+            }
 
-            browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
+            var host = browser.GetBrowserHost();
+            host.NotifyMoveOrResizeStarted();
 
             if (_offscreenRendering && browser is OffscreenOutOfProcessChromiumWebBrowser offscreenBrowser)
             {
                 offscreenBrowser.browserLocation = new System.Drawing.Point(screenX, screenY);
-                var host = browser?.GetBrowserHost();
                 host.NotifyMoveOrResizeStarted();
 
                 offscreenBrowser.viewRect = new Structs.Rect(0, 0, width, height);
@@ -213,11 +217,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         void IOutOfProcessClientRpc.UpdateRequestContextPreferences(int browserId, IDictionary<string, object> preferences)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
             CefThread.ExecuteOnUiThread(() =>
             {
-                IRequestContext requestContext = browser.GetRequestContext();
+                IRequestContext requestContext = GetBrowser(browserId)?.GetRequestContext();
                 foreach (KeyValuePair<string, object> pref in preferences)
                 {
                     requestContext?.SetPreference(pref.Key, pref.Value, out _);
@@ -238,6 +240,14 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 {
                     requestContext?.SetPreference(pref.Key, pref.Value, out _);
                 }
+            });
+        }
+
+        void IOutOfProcessClientRpc.SendMouseClickEvent(int browserId, int x, int y, string mouseButtonType, bool mouseUp, int clickCount, uint eventFlags)
+        {
+            CefThread.ExecuteOnUiThread(() =>
+            {
+                GetBrowser(browserId)?.GetBrowserHost().SendMouseClickEvent(x, y, (MouseButtonType)Enum.Parse(typeof(MouseButtonType), mouseButtonType), mouseUp, clickCount, (CefEventFlags)eventFlags);
             });
         }
     }

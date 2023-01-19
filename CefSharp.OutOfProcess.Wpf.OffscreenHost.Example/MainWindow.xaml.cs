@@ -1,8 +1,6 @@
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Interop;
 
 namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example
 {
@@ -41,7 +39,7 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost.Example
 
             _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, true, cachePath);
 
-            var browser = new OffscreenChromiumWebBrowser(_outOfProcessHost, "https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select");
+            var browser = new OffscreenChromiumWebBrowser(_outOfProcessHost, "https://www.google.com");
             BrowserContentPresenter.Content = browser;
 
         }
