@@ -184,6 +184,11 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
         public event EventHandler DevToolsContextAvailable;
 
         /// <summary>
+        /// Event handler that will get called when the browser title changes
+        /// </summary>
+        public event DependencyPropertyChangedEventHandler TitleChanged;
+
+        /// <summary>
         /// Navigates to the previous page in the browser history. Will automatically be enabled/disabled depending on the
         /// browser state.
         /// </summary>
@@ -282,6 +287,20 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
         /// <value>The redo command.</value>
         public ICommand RedoCommand { get; private set; }
 
+        private static readonly DependencyPropertyKey sTitlePropertyKey;
+        public static readonly DependencyProperty TitleProperty;
+
+
+        static OffscreenChromiumWebBrowser()
+        {
+            sTitlePropertyKey = DependencyProperty.RegisterReadOnly(
+                nameof(Title),
+                typeof(string),
+                typeof(OffscreenChromiumWebBrowser),
+                new PropertyMetadata(OnTitleChanged));
+            TitleProperty = sTitlePropertyKey.DependencyProperty;
+        }
+
         public OffscreenChromiumWebBrowser(OutOfProcessHost host, string initialAddress = null, IDictionary<string, object> requestContextPreferences = null)
         {
             if (host == null)
@@ -353,6 +372,13 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
 
         /// <inheritdoc/>
         public bool IsBrowserInitialized => _browserHwnd != IntPtr.Zero;
+
+        public string Title
+        {
+            get => (string)GetValue(TitleProperty);
+            private set => SetValue(sTitlePropertyKey, value);
+        }
+
 
         /// <inheritdoc/>
         void IChromiumWebBrowserInternal.OnDevToolsMessage(string jsonMsg)
@@ -1195,15 +1221,17 @@ namespace CefSharp.OutOfProcess.Wpf.OffscreenHost
 
         void IChromiumWebBrowserInternal.SetStatusMessage(string msg)
         {
-            // TODO: (CEF)
-            //throw new NotImplementedException();
+            StatusMessage?.Invoke(this, new StatusMessageEventArgs(msg));
         }
 
-        void IChromiumWebBrowserInternal.SetTitle(string title)
-        {
-            // TODO: (CEF)
-            // throw new NotImplementedException();
-        }
+        void IChromiumWebBrowserInternal.SetTitle(string title) => UiThreadRunAsync(() => { Title = title; });
+
+        /// <summary>
+        /// Handles the <see cref="E:TitleChanged" /> event.
+        /// </summary>
+        /// <param name="d">The d.</param>
+        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs"/> instance containing the event data.</param>
+        private static void OnTitleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) => ((OffscreenChromiumWebBrowser)d).TitleChanged?.Invoke(d, e);
 
         /////// <summary>
         /////// Called when the IME composition range has changed.
