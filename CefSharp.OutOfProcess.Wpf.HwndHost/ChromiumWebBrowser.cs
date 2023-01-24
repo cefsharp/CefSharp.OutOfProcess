@@ -1064,6 +1064,8 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             set { SetValue(WebBrowserProperty, value); }
         }
 
+        Handler.IDownloadHandler IChromiumWebBrowser.DownloadHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         /// <summary>
         /// The WebBrowser property
         /// </summary>

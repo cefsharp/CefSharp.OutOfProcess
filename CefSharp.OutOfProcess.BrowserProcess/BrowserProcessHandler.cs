@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using CefSharp.OutOfProcess.Interface;
 using System.Threading.Tasks;
+using CefSharp.OutOfProcess.BrowserProcess.CallbackProxies;
+using CefSharp.OutOfProcess.Interface.Callbacks;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -38,7 +40,21 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var threadId = Kernel32.GetCurrentThreadId();
 
             _outOfProcessServer.NotifyContextInitialized(threadId, Cef.CefSharpVersion, Cef.CefVersion, Cef.ChromiumVersion);
+            _outOfProcessServer.BeforeDownloadCallback += _outOfProcessServer_BeforeDownloadCallback;
+            _outOfProcessServer.DownloadCallback += _outOfProcessServer_DownloadCallback;
         }
+
+        private void _outOfProcessServer_DownloadCallback(object sender, DownloadCallbackDetails e)
+        {
+            ((DownloadHandlerProxy)GetBrowser(e.BrowserId).DownloadHandler)?.DownloadCallback(e);
+        }
+
+        private void _outOfProcessServer_BeforeDownloadCallback(object sender, BeforeDownloadCallbackDetails e)
+        {
+            ((DownloadHandlerProxy)GetBrowser(e.BrowserId).DownloadHandler)?.BeforeDownloadCallback(e);
+        }
+
+        private OutOfProcessChromiumWebBrowser GetBrowser(int id) => _browsers.FirstOrDefault(x => x.Id == id);
 
         protected override void Dispose(bool disposing)
         {
@@ -69,9 +85,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             return CefThread.ExecuteOnUiThread(() =>
             {
-                var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-                browser?.GetBrowserHost().SendDevToolsMessage(message);
+                GetBrowser(browserId).GetBrowserHost().SendDevToolsMessage(message);
 
                 return true;
             });
@@ -120,9 +134,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         void IOutOfProcessClientRpc.SetFocus(int browserId, bool focus)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-            browser?.GetBrowserHost().SetFocus(focus);
+            GetBrowser(browserId).GetBrowserHost().SetFocus(focus);
         }
     }
 }

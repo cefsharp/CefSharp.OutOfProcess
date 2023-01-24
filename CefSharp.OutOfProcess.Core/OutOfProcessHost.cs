@@ -1,4 +1,5 @@
 ﻿using CefSharp.OutOfProcess.Interface;
+using CefSharp.OutOfProcess.Interface.Callbacks;
 using CefSharp.OutOfProcess.Internal;
 using PInvoke;
 using StreamJsonRpc;
@@ -36,6 +37,11 @@ namespace CefSharp.OutOfProcess
             _outofProcessHostExePath = outOfProcessHostExePath;
             _cachePath = cachePath;
         }
+
+        public event EventHandler<DownloadCallbackDetails> DownloadCallback;
+
+        public event EventHandler<BeforeDownloadCallbackDetails> BeforeDownloadCallback;
+
 
         /// <summary>
         /// UI Thread assocuated with this <see cref="OutOfProcessHost"/>
@@ -135,18 +141,12 @@ namespace CefSharp.OutOfProcess
 
         void IOutOfProcessHostRpc.NotifyAddressChanged(int browserId, string address)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.SetAddress(address);
-            }
+            GetBrowser(browserId)?.SetAddress(address);
         }
 
         void IOutOfProcessHostRpc.NotifyBrowserCreated(int browserId, IntPtr browserHwnd)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.OnAfterBrowserCreated(browserHwnd);
-            }
+            GetBrowser(browserId)?.OnAfterBrowserCreated(browserHwnd);
         }
 
         void IOutOfProcessHostRpc.NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion)
@@ -169,42 +169,27 @@ namespace CefSharp.OutOfProcess
 
         void IOutOfProcessHostRpc.NotifyDevToolsMessage(int browserId, string devToolsMessage)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.OnDevToolsMessage(devToolsMessage);
-            }
+            GetBrowser(browserId)?.OnDevToolsMessage(devToolsMessage);
         }
 
         void IOutOfProcessHostRpc.NotifyDevToolsReady(int browserId)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.OnDevToolsReady();
-            }
+            GetBrowser(browserId)?.OnDevToolsReady();
         }
 
         void IOutOfProcessHostRpc.NotifyLoadingStateChange(int browserId, bool canGoBack, bool canGoForward, bool isLoading)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.SetLoadingStateChange(canGoBack, canGoForward, isLoading);
-            }
+            GetBrowser(browserId)?.SetLoadingStateChange(canGoBack, canGoForward, isLoading);
         }
 
         void IOutOfProcessHostRpc.NotifyStatusMessage(int browserId, string statusMessage)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.SetStatusMessage(statusMessage);
-            }
+            GetBrowser(browserId)?.SetStatusMessage(statusMessage);
         }
 
         void IOutOfProcessHostRpc.NotifyTitleChanged(int browserId, string title)
         {
-            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
-            {
-                chromiumWebBrowser.SetTitle(title);
-            }
+            GetBrowser(browserId)?.SetTitle(title);
         }
 
         public void NotifyMoveOrResizeStarted(int id)
@@ -253,6 +238,54 @@ namespace CefSharp.OutOfProcess
             host.Init();            
 
             return host.InitializedTask;
-        }        
+        }
+
+
+        void IOutOfProcessHostRpc.OnBeforeDownload(int browserId, CefSharp.OutOfProcess.Interface.Callbacks.DownloadItem downloadItem, int callback)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                chromiumWebBrowser.DownloadHandler?.OnBeforeDownload(chromiumWebBrowser, downloadItem, new DownloadCallbackProxy(this, callback, chromiumWebBrowser));
+            }
+        }
+
+        void IOutOfProcessHostRpc.OnDownloadUpdated(int browserId, CefSharp.OutOfProcess.Interface.Callbacks.DownloadItem downloadItem, int callback)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                GetBrowser(browserId)?.DownloadHandler?.OnDownloadUpdated(chromiumWebBrowser, downloadItem, new DownloadCallbackProxy(this, callback, chromiumWebBrowser));
+            }
+        }
+
+        private IChromiumWebBrowserInternal GetBrowser(int browserId)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                return chromiumWebBrowser;
+            }
+
+            return null;
+        }
+
+        Task<bool> IOutOfProcessHostRpc.OnCanDownloadAsync(int browserId, string url, string requestMethod)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser))
+            {
+                var handler = chromiumWebBrowser.DownloadHandler;
+                if (handler == null)
+                {
+                    return Task.FromResult(false);
+                }
+
+                var result = handler.CanDownload(chromiumWebBrowser, url, requestMethod);
+                return Task.FromResult(result);
+            }
+
+            return Task.FromResult(false);
+        }
+
+        internal void InvokeBeforeDownloadCallback(BeforeDownloadCallbackDetails callbackDetails) => BeforeDownloadCallback.Invoke(this, callbackDetails);
+
+        internal void InvokeDownloadCallback(DownloadCallbackDetails callbackDetails) => DownloadCallback.Invoke(this, callbackDetails);
     }
 }

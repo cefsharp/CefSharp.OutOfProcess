@@ -12,6 +12,7 @@ namespace CefSharp.OutOfProcess.WinForms
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<MessageErrorEventArgs> MessageError;
+        public event EventHandler Disconnected;
 
         public OutOfProcessConnectionTransport(int browserId, OutOfProcessHost outOfProcessHost)
         {

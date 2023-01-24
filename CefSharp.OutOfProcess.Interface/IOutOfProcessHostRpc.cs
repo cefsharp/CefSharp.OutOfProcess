@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CefSharp.OutOfProcess.Interface.Callbacks;
+using System;
+using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
 {
@@ -78,5 +80,14 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="cefVersion">Cef Version</param>
         /// <param name="chromiumVersion">Chromium Version</param>
         void NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion);
+
+        Task<bool> OnCanDownloadAsync(int browserId, string url, string requestMethod);
+
+        void OnBeforeDownload(int browserId, DownloadItem downloadItem, int callback);
+
+        void OnDownloadUpdated(int browserId, DownloadItem downloadItem, int callback);
+
+        event EventHandler<BeforeDownloadCallbackDetails> BeforeDownloadCallback;
+        event EventHandler<DownloadCallbackDetails> DownloadCallback;
     }
 }
