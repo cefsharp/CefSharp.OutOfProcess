@@ -96,7 +96,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 IRequestContext requestContext = null;
                 if (requestContextPreferences != null)
                 {
-                    requestContext = new RequestContext();
+                    requestContext = new RequestContext(Cef.GetGlobalRequestContext());
                     foreach (KeyValuePair<string, object> pref in requestContextPreferences)
                     {
                         requestContext.SetPreference(pref.Key, pref.Value, out _);
