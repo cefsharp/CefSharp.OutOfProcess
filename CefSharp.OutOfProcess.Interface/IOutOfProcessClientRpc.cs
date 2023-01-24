@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace CefSharp.OutOfProcess.Interface
 {
@@ -35,8 +36,22 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="parentHwnd">parent Hwnd</param>
         /// <param name="url">start url</param>
         /// <param name="browserId">browser id</param>
+        /// <param name="requestContextPreferences">Request Context Preferences to set.</param>
         /// <returns>Task</returns>
-        Task CreateBrowser(IntPtr parentHwnd, string url, int browserId);
+        Task CreateBrowser(IntPtr parentHwnd, string url, int browserId, IDictionary<string, object> requestContextPreferences);
+
+        /// <summary>
+        /// Modify RequestContext-Preferences for an existing browser.
+        /// </summary>
+        /// <param name="browserId">browser id</param>
+        /// <param name="requestContextPreferences">Request Context Preferences to set.</param>
+        void SetRequestContextPreferences(int browserId, IDictionary<string, object> requestContextPreferences);
+
+        /// <summary>
+        /// Modify Global RequestContext-Preferences
+        /// </summary>
+        /// /// <param name="requestContextPreferences">Request Context Preferences to set.</param>
+        void SetGlobalRequestContextPreferences(IDictionary<string, object> requestContextPreferences);
 
         /// <summary>
         /// Notify the browser that the window hosting it is about to be moved or resized.
