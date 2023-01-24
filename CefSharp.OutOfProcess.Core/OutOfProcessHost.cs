@@ -1,4 +1,5 @@
 ﻿using CefSharp.OutOfProcess.Interface;
+using CefSharp.OutOfProcess.Interface.Callbacks;
 using CefSharp.OutOfProcess.Internal;
 using PInvoke;
 using StreamJsonRpc;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess
@@ -36,6 +38,8 @@ namespace CefSharp.OutOfProcess
             _outofProcessHostExePath = outOfProcessHostExePath;
             _cachePath = cachePath;
         }
+
+        public event EventHandler<FileDialogCallbackDetails> FileDialogCallback;
 
         /// <summary>
         /// UI Thread assocuated with this <see cref="OutOfProcessHost"/>
@@ -253,6 +257,20 @@ namespace CefSharp.OutOfProcess
             host.Init();            
 
             return host.InitializedTask;
-        }        
+        }
+
+        Task<bool> IOutOfProcessHostRpc.OnFileDialog(int browserId, string mode, string title, string defaultFilePath, string[] acceptFilters, int callback)
+        {
+            if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser) && chromiumWebBrowser.DialogHandler != null)
+            {
+
+                var result = chromiumWebBrowser.DialogHandler.OnFileDialog(chromiumWebBrowser, (CefFileDialogMode)Enum.Parse(typeof(CefFileDialogMode), mode), title, defaultFilePath, acceptFilters.ToList(), new FileDialogCallbackProxy(this, callback, chromiumWebBrowser));
+                return Task.FromResult(result);
+            }
+
+            return Task.FromResult(false);
+        }
+
+        internal void InvokeFileDialogCallback(FileDialogCallbackDetails callbackDetails) => FileDialogCallback.Invoke(this, callbackDetails);
     }
 }

@@ -121,6 +121,8 @@ namespace CefSharp.OutOfProcess.WinForms
         /// <inheritdoc/>
         public Frame MainFrame => _devToolsContext == null ? null : _devToolsContext.MainFrame;
 
+        Handler.IDialogHandler IChromiumWebBrowser.DialogHandler { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         /// <inheritdoc/>
         protected override void OnHandleCreated(EventArgs e)
         {

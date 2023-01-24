@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CefSharp.OutOfProcess.Interface.Callbacks;
+using System;
+using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
 {
@@ -78,5 +80,10 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="cefVersion">Cef Version</param>
         /// <param name="chromiumVersion">Chromium Version</param>
         void NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion);
+
+        Task<bool> OnFileDialog(int browserId, string mode, string title, string defaultFilePath, string[] acceptFilters, int callback);
+
+        event EventHandler<FileDialogCallbackDetails> FileDialogCallback;
+
     }
 }

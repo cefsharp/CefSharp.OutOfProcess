@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using CefSharp.OutOfProcess.Interface;
 using System.Threading.Tasks;
+using CefSharp.OutOfProcess.BrowserProcess.CallbackProxies;
+using CefSharp.OutOfProcess.Interface.Callbacks;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -38,6 +40,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var threadId = Kernel32.GetCurrentThreadId();
 
             _outOfProcessServer.NotifyContextInitialized(threadId, Cef.CefSharpVersion, Cef.CefVersion, Cef.ChromiumVersion);
+            _outOfProcessServer.FileDialogCallback += _outOfProcessServer_FileDialogCallback;
         }
 
         protected override void Dispose(bool disposing)
@@ -61,6 +64,17 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
                 p.Dispose();
 
+                return true;
+            });
+        }
+
+        private OutOfProcessChromiumWebBrowser GetBrowser(int id) => _browsers.FirstOrDefault(x => x.Id == id);
+
+        private void _outOfProcessServer_FileDialogCallback(object sender, FileDialogCallbackDetails e)
+        {
+            _ = CefThread.ExecuteOnUiThread(() =>
+            {
+                ((DialogHandlerProxy)GetBrowser(e.BrowserId).DialogHandler).Callback(e);
                 return true;
             });
         }
