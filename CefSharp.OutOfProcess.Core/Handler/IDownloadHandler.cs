@@ -1,5 +1,7 @@
 namespace CefSharp.OutOfProcess.Handler
 {
+    using CefSharp.OutOfProcess.Interface.Callbacks;
+
     public interface IDownloadHandler
     {
         bool CanDownload(IChromiumWebBrowser chromiumWebBrowser, string url, string requestMethod);

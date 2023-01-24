@@ -14,13 +14,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess.CallbackProxies
 
         public void BeforeDownloadCallback(BeforeDownloadCallbackDetails details)
         {
-            Debugger.Launch();
-            ((IBeforeDownloadCallback)GetCallback(details.CallbackId)).Continue(details.DownloadPath, details.ShowDialog);
+            ((CefSharp.OutOfProcess.Interface.Callbacks.IBeforeDownloadCallback)GetCallback(details.CallbackId)).Continue(details.DownloadPath, details.ShowDialog);
         }
 
         public void DownloadCallback(DownloadCallbackDetails details)
         {
-            var cb = (IDownloadItemCallback)GetCallback(details.CallbackId);
+            var cb = (CefSharp.OutOfProcess.Interface.Callbacks.IDownloadItemCallback)GetCallback(details.CallbackId);
             if (details.Cancel)
             {
                 cb.Cancel();
@@ -40,12 +39,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess.CallbackProxies
             return host.OnCanDownloadAsync(((OutOfProcessChromiumWebBrowser)chromiumWebBrowser).Id, url, requestMethod).Result;
         }
 
-        void IDownloadHandler.OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.DownloadItem downloadItem, IBeforeDownloadCallback callback)
+        void IDownloadHandler.OnBeforeDownload(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.DownloadItem downloadItem, CefSharp.IBeforeDownloadCallback callback)
         {
             host.OnBeforeDownload(((OutOfProcessChromiumWebBrowser)chromiumWebBrowser).Id, Convert(downloadItem), CreateCallback(callback));
         }
 
-        void IDownloadHandler.OnDownloadUpdated(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.DownloadItem downloadItem, IDownloadItemCallback callback)
+        void IDownloadHandler.OnDownloadUpdated(IWebBrowser chromiumWebBrowser, IBrowser browser, CefSharp.DownloadItem downloadItem, CefSharp.IDownloadItemCallback callback)
         {
             host.OnDownloadUpdated(((OutOfProcessChromiumWebBrowser)chromiumWebBrowser).Id, Convert(downloadItem), CreateCallback(callback));
         }
