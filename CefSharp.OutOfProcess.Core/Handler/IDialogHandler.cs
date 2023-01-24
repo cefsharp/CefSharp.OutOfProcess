@@ -1,6 +1,7 @@
 namespace CefSharp.OutOfProcess.Handler
 {
     using System.Collections.Generic;
+    using CefSharp.OutOfProcess.Interface.Callbacks;
 
     public interface IDialogHandler
     {
@@ -38,6 +39,6 @@ namespace CefSharp.OutOfProcess.Handler
         // Returns:
         //     To display a custom dialog return true. To display the default dialog return
         //     false.
-        bool OnFileDialog(IChromiumWebBrowser chromiumWebBrowser, CefFileDialogMode mode, string title, string defaultFilePath, IEnumerable<string> acceptFilters, IFileDialogCallback callback);
+        bool OnFileDialog(IChromiumWebBrowser chromiumWebBrowser, string mode, string title, string defaultFilePath, IEnumerable<string> acceptFilters, IFileDialogCallback callback);
     }
 }

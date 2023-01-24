@@ -263,8 +263,7 @@ namespace CefSharp.OutOfProcess
         {
             if (_browsers.TryGetValue(browserId, out var chromiumWebBrowser) && chromiumWebBrowser.DialogHandler != null)
             {
-
-                var result = chromiumWebBrowser.DialogHandler.OnFileDialog(chromiumWebBrowser, (CefFileDialogMode)Enum.Parse(typeof(CefFileDialogMode), mode), title, defaultFilePath, acceptFilters.ToList(), new FileDialogCallbackProxy(this, callback, chromiumWebBrowser));
+                var result = chromiumWebBrowser.DialogHandler.OnFileDialog(chromiumWebBrowser, mode, title, defaultFilePath, acceptFilters.ToList(), new FileDialogCallbackProxy(this, callback, chromiumWebBrowser));
                 return Task.FromResult(result);
             }
 
