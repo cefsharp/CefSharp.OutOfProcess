@@ -74,7 +74,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             _ = CefThread.ExecuteOnUiThread(() =>
             {
-                ((DialogHandlerProxy)GetBrowser(e.BrowserId).DialogHandler).Callback(e);
+                ((DialogHandlerProxy)GetBrowser(e.BrowserId).DialogHandler)?.Callback(e);
                 return true;
             });
         }
@@ -83,10 +83,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             return CefThread.ExecuteOnUiThread(() =>
             {
-                var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-                browser?.GetBrowserHost().SendDevToolsMessage(message);
-
+                GetBrowser(browserId).GetBrowserHost()?.SendDevToolsMessage(message);
                 return true;
             });
         }
@@ -127,16 +124,12 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
         void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-            browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
+            GetBrowser(browserId).GetBrowserHost()?.NotifyMoveOrResizeStarted();
         }
 
         void IOutOfProcessClientRpc.SetFocus(int browserId, bool focus)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-            browser?.GetBrowserHost().SetFocus(focus);
+            GetBrowser(browserId).GetBrowserHost()?.SetFocus(focus);
         }
     }
 }
