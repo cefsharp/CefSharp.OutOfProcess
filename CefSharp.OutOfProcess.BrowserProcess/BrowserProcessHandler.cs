@@ -146,15 +146,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             if (browser?.GetRequestContext() is IRequestContext requestContext)
             {
-                CefThread.ExecuteOnUiThread(() =>
-                {                    
-                    foreach (KeyValuePair<string, object> pref in preferences)
-                    {
-                        requestContext.SetPreference(pref.Key, pref.Value, out _);
-                    }
-
-                    return true;
-                });
+                SetRequestContextPreferences(requestContext, preferences);
             }
         }
 
@@ -166,16 +158,21 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             if (Cef.GetGlobalRequestContext() is IRequestContext requestContext)
             {
-                CefThread.ExecuteOnUiThread(() =>
-                {                
-                    foreach (KeyValuePair<string, object> pref in preferences)
-                    {
-                        requestContext.SetPreference(pref.Key, pref.Value, out _);
-                    }                
-
-                    return true;
-                });
+                SetRequestContextPreferences(requestContext, preferences);
             }
+        }
+
+        void SetRequestContextPreferences(IRequestContext requestContext, IDictionary<string, object> preferences)
+        {
+            _ = CefThread.ExecuteOnUiThread(() =>
+            {
+                foreach (KeyValuePair<string, object> pref in preferences)
+                {
+                    requestContext.SetPreference(pref.Key, pref.Value, out _);
+                }
+
+                return true;
+            });
         }
     }
 }
