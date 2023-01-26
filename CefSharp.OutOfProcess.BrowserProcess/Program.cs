@@ -29,13 +29,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
                 MultiThreadedMessageLoop = false
             };
 
-            foreach (var arg in args)
-            {
-                List<string> splitted = arg.Split('=').ToList();
-                var key = splitted.First().Substring(2);
-                var value = splitted.Count == 1 ? string.Empty : splitted.Last();
-                AddArg(settings, key, value);
-            }
+            AddArgs(settings, args);
 
             var browserProcessHandler = new BrowserProcessHandler(parentProcessId);
 
@@ -76,7 +70,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             return 0;
         }
 
-        private static void AddArg(CefSettingsBase settings, string key, string value)
+        private static void AddArgs(CefSettings settings, IEnumerable<string> args)
+        {
+            foreach (var arg in args)
+            {
+                List<string> splitted = arg.Split('=').ToList();
+                var key = splitted.First().Substring(2);
+                var value = splitted.Count == 1 ? string.Empty : splitted.Last();
+                AddArg(settings, key, value);
+            }
+        }
+
+        private static void AddArg(CefSettings settings, string key, string value)
         {
             switch (key)
             {
