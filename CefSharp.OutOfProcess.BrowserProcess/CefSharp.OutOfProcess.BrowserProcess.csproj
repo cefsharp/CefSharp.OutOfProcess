@@ -19,11 +19,11 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="CefSharp.Common" Version="102.0.100" />
+    <PackageReference Include="CefSharp.Common" Version="109.1.110" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="CefSharp.Common.NETCore" Version="102.0.100" />
+    <PackageReference Include="CefSharp.Common.NETCore" Version="109.1.110" />
   </ItemGroup>
 
   <ItemGroup>

@@ -172,6 +172,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         /// <value>The drag handler.</value>
         public IDragHandler DragHandler { get; set; }
+
+        /// <inheritdoc/>
+        public IPermissionHandler PermissionHandler { get; set; }
         /// <summary>
         /// Implement <see cref="IResourceRequestHandlerFactory" /> and control the loading of resources
         /// </summary>
@@ -524,6 +527,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             DragHandler = null;
             DownloadHandler = null;
             MenuHandler = null;
+            PermissionHandler = null;
             ResourceRequestHandlerFactory = null;
             RenderProcessMessageHandler = null;
 
