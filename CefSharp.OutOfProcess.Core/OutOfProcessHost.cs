@@ -34,11 +34,11 @@ namespace CefSharp.OutOfProcess
         private ConcurrentDictionary<int, IChromiumWebBrowserInternal> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowserInternal>();
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private OutOfProcessHost(string outOfProcessHostExePath, string cachePath = null, IEnumerable<string> userargs = null)
+        private OutOfProcessHost(string outOfProcessHostExePath, string cachePath = null, IEnumerable<string> cefCommandLineArgs = null)
         {
             _outofProcessHostExePath = outOfProcessHostExePath;
             _cachePath = cachePath;
-            _cefCommandLineArgs = userargs;
+            _cefCommandLineArgs = cefCommandLineArgs;
         }
 
         /// <summary>
