@@ -254,9 +254,9 @@ namespace CefSharp.OutOfProcess
 
             var host = new OutOfProcessHost(fullPath, cachePath, cefCommandLineArgs);
 
-            host.Init();
+            host.Init();            
 
             return host.InitializedTask;
-        }
+        }        
     }
 }
