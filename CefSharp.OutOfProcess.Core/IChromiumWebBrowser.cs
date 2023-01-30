@@ -1,4 +1,4 @@
-﻿using CefSharp.Dom;
+using CefSharp.Dom;
 using System;
 using System.Threading.Tasks;
 

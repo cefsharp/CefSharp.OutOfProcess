@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net462;netcoreapp3.1</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
+    <PackageReference Include="PInvoke.User32" Version="0.7.124" />
+    <PackageReference Include="StreamJsonRpc" Version="2.13.33" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(OutputPath)\$(TargetFrameworks)\CefSharp.OutOfProcess.Core.*">
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFrameworks)</PackagePath>
+    </Content>
+    <Content Include="$(OutputPath)\$(TargetFrameworks)\CefSharp.OutOfProcess.Interface.*">
+      <Pack>true</Pack>
+      <PackagePath>lib\$(TargetFrameworks)</PackagePath>
+    </Content>
+  </ItemGroup>
+</Project>
