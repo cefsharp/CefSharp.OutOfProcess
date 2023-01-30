@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace CefSharp.OutOfProcess.Interface
 {
@@ -78,5 +78,11 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="cefVersion">Cef Version</param>
         /// <param name="chromiumVersion">Chromium Version</param>
         void NotifyContextInitialized(int threadId, string cefSharpVersion, string cefVersion, string chromiumVersion);
+
+        void NotifyPaint(int browserId, bool isPopup, Rect dirtyRect, int width, int height, string file);
+
+        void NotifyPopupShow(int browserId, bool show);
+
+        void NotifyPopupSize(int browserId, Rect rect);
     }
 }

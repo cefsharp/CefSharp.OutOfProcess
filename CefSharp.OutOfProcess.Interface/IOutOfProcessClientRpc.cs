@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess.Interface
@@ -19,9 +19,13 @@ namespace CefSharp.OutOfProcess.Interface
         /// Send DevTools message
         /// </summary>
         /// <param name="browserId">browser Id</param>
-        /// <param name="message"devtools message (json)></param>
+        /// <param name="message">devtools message (json)</param>
         /// <returns>Task</returns>
         Task SendDevToolsMessage(int browserId, string message);
+
+        Task ShowDevTools(int browserId);
+
+        Task LoadUrl(int browserId, string url);
 
         /// <summary>
         /// Close the Browser Process (host)
@@ -43,7 +47,8 @@ namespace CefSharp.OutOfProcess.Interface
         /// This will dismiss any existing popups (dropdowns).
         /// </summary>
         /// <param name="browserId">browser Id</param>
-        void NotifyMoveOrResizeStarted(int browserId);
+        /// <param name="browserId">Position and size of the window. Only required in offscreen mode.</param>
+        void NotifyMoveOrResizeStarted(int browserId, Rect rect = default);
 
         /// <summary>
         /// Set whether the browser is focused.
@@ -51,5 +56,18 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
         void SetFocus(int browserId, bool focus);
+
+        /// <summary>
+        /// Sends a mouse click to the client.
+        /// Custom implementation necessary because IDevToolsContext can't handle clicks on popups
+        /// </summary>
+        /// <param name="browserId"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="mouseButtonType"></param>
+        /// <param name="mouseUp"></param>
+        /// <param name="clickCount"></param>
+        /// <param name="eventFlags"></param>
+        void SendMouseClickEvent(int browserId, int x, int y, string mouseButtonType, bool mouseUp, int clickCount, uint eventFlags);
     }
 }

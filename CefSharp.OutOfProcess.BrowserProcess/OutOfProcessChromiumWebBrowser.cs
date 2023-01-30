@@ -1,4 +1,4 @@
-﻿using CefSharp.Internals;
+using CefSharp.Internals;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
@@ -7,15 +7,13 @@ using CefSharp.Callback;
 using System.IO;
 using CefSharp.OutOfProcess.Interface;
 using System.Runtime.InteropServices;
-using PInvoke;
-using System.Diagnostics;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
     /// <summary>
     /// An ChromiumWebBrowser instance specifically for hosting CEF out of process
     /// </summary>
-    public partial class OutOfProcessChromiumWebBrowser : IWebBrowserInternal
+    public class OutOfProcessChromiumWebBrowser : IWebBrowserInternal
     {
         public const string BrowserNotInitializedExceptionErrorMessage =
             "The ChromiumWebBrowser instance creates the underlying Chromium Embedded Framework (CEF) browser instance in an async fashion. " +
@@ -36,7 +34,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// Internal ID used for tracking browsers between Processes;
         /// </summary>
-        private int _id;
+        private readonly int _id;
 
         /// <summary>
         /// The managed cef browser adapter
@@ -46,7 +44,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// JSON RPC used for IPC with host
         /// </summary>
-        private IOutOfProcessHostRpc _outofProcessHostRpc;
+        private readonly IOutOfProcessHostRpc _outofProcessHostRpc;
 
         /// <summary>
         /// Flag to guard the creation of the underlying browser - only one instance can be created
@@ -177,6 +175,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </summary>
         /// <value>The resource handler factory.</value>
         public IResourceRequestHandlerFactory ResourceRequestHandlerFactory { get; set; }
+
+        /// <summary>
+        /// Gets the out of process host.
+        /// </summary>
+        private protected IOutOfProcessHostRpc OutofProcessHostRpc => _outofProcessHostRpc;
 
         /// <summary>
         /// Event handler that will get called when the resource load for a navigation fails or is canceled.
@@ -453,7 +456,10 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <inheritdoc/>
         public void LoadUrl(string url)
         {
-            throw new NotImplementedException();
+            using (var frame = _browser.MainFrame)
+            {
+                frame.LoadUrl(url);
+            }
         }
 
         /// <inheritdoc/>
@@ -665,7 +671,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// </param>
         /// <exception cref="System.InvalidOperationException">Cef::Initialize() failed</exception>
         public OutOfProcessChromiumWebBrowser(IOutOfProcessHostRpc outOfProcessServer, int id, string address = "",
-            IRequestContext requestContext = null)
+            IRequestContext requestContext = null, bool offscreenRendering = false)
         {
             _id = id;
             RequestContext = requestContext;
@@ -674,7 +680,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             Cef.AddDisposable(this);
             Address = address;
 
-            _managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, false);
+            _managedCefBrowserAdapter = ManagedCefBrowserAdapter.Create(this, offscreenRendering);
         }
 
         /// <summary>
@@ -774,7 +780,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             //We actually check if WS_EX_NOACTIVATE was set for instances
             //the user has override CreateBrowserWindowInfo and not called base.CreateBrowserWindowInfo
-            _removeExNoActivateStyle = (windowInfo.ExStyle & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE;
+            _removeExNoActivateStyle = !windowInfo.WindowlessRenderingEnabled && (windowInfo.ExStyle & WS_EX_NOACTIVATE) == WS_EX_NOACTIVATE;
 
             //TODO: We need some sort of timeout and
             //if we use the same approach for WPF/WinForms then

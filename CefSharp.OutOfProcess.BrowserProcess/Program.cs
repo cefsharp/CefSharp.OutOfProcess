@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using CefSharp.Internals;
@@ -18,6 +18,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
             var cachePath = CommandLineArgsParser.GetArgumentValue(args, "--cachePath");
+            var offscreenRendering = bool.Parse(CommandLineArgsParser.GetArgumentValue(args, "--offscreenRendering"));
 
             var parentProcess = Process.GetProcessById(parentProcessId);
 
@@ -25,10 +26,11 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             {
                 //By default CefSharp will use an in-memory cache, you need to specify a Cache Folder to persist data
                 CachePath = cachePath,
+                WindowlessRenderingEnabled = offscreenRendering,
                 MultiThreadedMessageLoop = false
             };
 
-            var browserProcessHandler = new BrowserProcessHandler(parentProcessId);
+            var browserProcessHandler = new BrowserProcessHandler(parentProcessId, offscreenRendering);
 
             Cef.EnableWaitForBrowsersToClose();
 

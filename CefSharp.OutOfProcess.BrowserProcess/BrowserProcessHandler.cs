@@ -1,4 +1,4 @@
-﻿using CefSharp.Internals;
+using CefSharp.Internals;
 using PInvoke;
 using StreamJsonRpc;
 using System;
@@ -13,16 +13,18 @@ namespace CefSharp.OutOfProcess.BrowserProcess
     public class BrowserProcessHandler : CefSharp.Handler.BrowserProcessHandler, IOutOfProcessClientRpc
     {
         private readonly int _parentProcessId;
-        private IList<OutOfProcessChromiumWebBrowser> _browsers = new List<OutOfProcessChromiumWebBrowser>();
+        private readonly bool _offscreenRendering;
+        private readonly IList<OutOfProcessChromiumWebBrowser> _browsers = new List<OutOfProcessChromiumWebBrowser>();
         /// <summary>
         /// JSON RPC used for IPC with host
         /// </summary>
         private JsonRpc _jsonRpc;
         private IOutOfProcessHostRpc _outOfProcessServer;
 
-        public BrowserProcessHandler(int parentProcessId)
+        public BrowserProcessHandler(int parentProcessId, bool offscreenRendering)
         {
             _parentProcessId = parentProcessId;
+            _offscreenRendering = offscreenRendering;
         }
 
         protected override void OnContextInitialized()
@@ -30,10 +32,9 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             base.OnContextInitialized();
 
             _jsonRpc = JsonRpc.Attach(Console.OpenStandardOutput(), Console.OpenStandardInput());
-            _outOfProcessServer = _jsonRpc.Attach<IOutOfProcessHostRpc>();
             _jsonRpc.AllowModificationWhileListening = true;
+            _outOfProcessServer = _jsonRpc.Attach<IOutOfProcessHostRpc>();
             _jsonRpc.AddLocalRpcTarget<IOutOfProcessClientRpc>(this, null);
-            _jsonRpc.AllowModificationWhileListening = false;
 
             var threadId = Kernel32.GetCurrentThreadId();
 
@@ -69,10 +70,25 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         {
             return CefThread.ExecuteOnUiThread(() =>
             {
-                var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+                GetBrowser(browserId)?.GetBrowserHost().SendDevToolsMessage(message);
+                return true;
+            });
+        }
 
-                browser?.GetBrowserHost().SendDevToolsMessage(message);
+        Task IOutOfProcessClientRpc.ShowDevTools(int browserId)
+        {
+            return CefThread.ExecuteOnUiThread(() =>
+            {
+                GetBrowser(browserId).ShowDevTools();
+                return true;
+            });
+        }
 
+        Task IOutOfProcessClientRpc.LoadUrl(int browserId, string url)
+        {
+            return CefThread.ExecuteOnUiThread(() =>
+            {
+                GetBrowser(browserId).LoadUrl(url);
                 return true;
             });
         }
@@ -93,15 +109,30 @@ namespace CefSharp.OutOfProcess.BrowserProcess
 
             return CefThread.ExecuteOnUiThread(() =>
             {
-                var browser = new OutOfProcessChromiumWebBrowser(_outOfProcessServer, id, url);
+                OutOfProcessChromiumWebBrowser browser;
 
-                var windowInfo = new WindowInfo();
-                windowInfo.WindowName = "CefSharpBrowserProcess";
-                windowInfo.SetAsChild(parentHwnd);
+                IWindowInfo windowInfo;
 
-                //Disable Window activation by default
-                //https://bitbucket.org/chromiumembedded/cef/issues/1856/branch-2526-cef-activates-browser-window
-                windowInfo.ExStyle |= OutOfProcessChromiumWebBrowser.WS_EX_NOACTIVATE;
+                if (_offscreenRendering)
+                {
+                    browser = new OffscreenOutOfProcessChromiumWebBrowser(_outOfProcessServer, id, url);
+                    windowInfo = Core.ObjectFactory.CreateWindowInfo();
+                    windowInfo.SetAsWindowless(parentHwnd);
+                    windowInfo.Width = 0;
+                    windowInfo.Height = 0;
+                }
+                else
+                {
+                    browser = new OutOfProcessChromiumWebBrowser(_outOfProcessServer, id, url);
+                    windowInfo = new WindowInfo();
+                    windowInfo.WindowName = "CefSharpBrowserProcess";
+                    windowInfo.SetAsChild(parentHwnd);
+
+                    //Disable Window activation by default
+                    //https://bitbucket.org/chromiumembedded/cef/issues/1856/branch-2526-cef-activates-browser-window
+                    windowInfo.ExStyle |= OutOfProcessChromiumWebBrowser.WS_EX_NOACTIVATE;
+
+                }
 
                 browser.CreateBrowser(windowInfo);
 
@@ -111,18 +142,39 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
-        void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId)
+        void IOutOfProcessClientRpc.NotifyMoveOrResizeStarted(int browserId, Rect rect)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+            var browser = GetBrowser(browserId);
+            if(browser == null)
+            {
+                return;
+            }
 
-            browser?.GetBrowserHost().NotifyMoveOrResizeStarted();
+            var host = browser.GetBrowserHost();
+            host.NotifyMoveOrResizeStarted();
+
+            if (_offscreenRendering && browser is OffscreenOutOfProcessChromiumWebBrowser offscreenBrowser)
+            {
+                host.NotifyMoveOrResizeStarted();
+                offscreenBrowser.ViewRect = new Structs.Rect(rect.X, rect.Y, rect.Width, rect.Height);
+                host.WasResized();
+            }
         }
 
         void IOutOfProcessClientRpc.SetFocus(int browserId, bool focus)
         {
-            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
-
-            browser?.GetBrowserHost().SetFocus(focus);
+            GetBrowser(browserId)?.GetBrowserHost().SetFocus(focus);
         }
+
+        void IOutOfProcessClientRpc.SendMouseClickEvent(int browserId, int x, int y, string mouseButtonType, bool mouseUp, int clickCount, uint eventFlags)
+        {
+            CefThread.ExecuteOnUiThread(() =>
+            {
+                GetBrowser(browserId)?.GetBrowserHost().SendMouseClickEvent(x, y, (MouseButtonType)Enum.Parse(typeof(MouseButtonType), mouseButtonType), mouseUp, clickCount, (CefEventFlags)eventFlags);
+                return true;
+            });
+        }
+
+        private OutOfProcessChromiumWebBrowser GetBrowser(int id) => _browsers.FirstOrDefault(x => x.Id == id);
     }
 }
