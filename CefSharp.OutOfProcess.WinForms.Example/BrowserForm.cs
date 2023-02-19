@@ -6,7 +6,6 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -18,12 +17,6 @@ namespace CefSharp.OutOfProcess.WinForms.Example
         private string _buildType = "Debug";
 #else
         private string _buildType = "Release";
-#endif
-
-#if NETCOREAPP3_1_OR_GREATER
-        private string _targetFramework = "netcoreapp3.1";
-#else
-        private string _targetFramework = "net462";
 #endif
 
         private const string DefaultUrlForAddedTabs = "https://www.google.com";
@@ -59,7 +52,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
 
         private async void BrowserFormLoad(object sender, EventArgs e)
         {
-            var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}\\{_targetFramework}");
+            var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}");
             outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
             _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
