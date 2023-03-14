@@ -29,7 +29,10 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost.Example
             var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}");
             outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
-            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
+
+            var settings = Settings.WithCachePath(cachePath);
+
+            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, settings);
 
             BrowserContentPresenter.Content = new ChromiumWebBrowser(_outOfProcessHost, "https://google.com");
         }

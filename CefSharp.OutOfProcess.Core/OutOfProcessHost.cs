@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace CefSharp.OutOfProcess
@@ -27,14 +28,14 @@ namespace CefSharp.OutOfProcess
         private int _remoteuiThreadId;
         private int _browserIdentifier = 1;
         private string _outofProcessHostExePath;
-        private string _cachePath;
+        private Settings _settings;
         private ConcurrentDictionary<int, IChromiumWebBrowserInternal> _browsers = new ConcurrentDictionary<int, IChromiumWebBrowserInternal>();
         private TaskCompletionSource<OutOfProcessHost> _processInitialized = new TaskCompletionSource<OutOfProcessHost>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        private OutOfProcessHost(string outOfProcessHostExePath, string cachePath = null)
+        private OutOfProcessHost(string outOfProcessHostExePath, Settings settings = null)
         {
             _outofProcessHostExePath = outOfProcessHostExePath;
-            _cachePath = cachePath;
+            _settings = settings;
         }
 
         /// <summary>
@@ -108,7 +109,22 @@ namespace CefSharp.OutOfProcess
         {
             var currentProcess = Process.GetCurrentProcess();
 
-            var args = $"--parentProcessId={currentProcess.Id} --cachePath={_cachePath}";
+            var args = $"--parentProcessId={currentProcess.Id}";
+
+            if (_settings != null)
+            {
+                if (!string.IsNullOrEmpty(_settings.CachePath))
+                {
+                    args += $" --cachePath={_settings.CachePath}";
+                }
+
+                if (!string.IsNullOrEmpty(_settings.RootCachePath))
+                {
+                    args += $" --rootCachePath={_settings.RootCachePath}";
+                }
+
+                args = _settings.AdditionalCommandLineArgs.Aggregate(args, (current, next) => $"{current} {next}");
+            }
 
             _browserProcess = Process.Start(new ProcessStartInfo(_outofProcessHostExePath, args)
             {
@@ -234,7 +250,7 @@ namespace CefSharp.OutOfProcess
             _jsonRpc = null;
         }
 
-        public static Task<OutOfProcessHost> CreateAsync(string path = HostExeName, string cachePath = null)
+        public static Task<OutOfProcessHost> CreateAsync(string path = HostExeName, Settings settings = null)
         {
             if(string.IsNullOrEmpty(path))
             {
@@ -248,7 +264,7 @@ namespace CefSharp.OutOfProcess
                 throw new FileNotFoundException("Unable to find Host executable.", path);
             }
 
-            var host = new OutOfProcessHost(fullPath, cachePath);
+            var host = new OutOfProcessHost(fullPath, settings);
 
             host.Init();            
 

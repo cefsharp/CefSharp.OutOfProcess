@@ -55,7 +55,11 @@ namespace CefSharp.OutOfProcess.WinForms.Example
             var outOfProcessHostPath = Path.GetFullPath($"..\\..\\..\\..\\..\\CefSharp.OutOfProcess.BrowserProcess\\bin\\{_buildType}");
             outOfProcessHostPath = Path.Combine(outOfProcessHostPath, OutOfProcessHost.HostExeName);
             var cachePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CefSharp\\OutOfProcessCache");
-            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, cachePath);
+
+            var settings = Settings.WithCachePath(cachePath)
+                .AddCommandLineArg("--lang=en-GB");
+
+            _outOfProcessHost = await OutOfProcessHost.CreateAsync(outOfProcessHostPath, settings);
 
             AddTab(DefaultUrlForAddedTabs);
         }
