@@ -87,13 +87,23 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             });
         }
 
-        Task IOutOfProcessClientRpc.CreateBrowser(IntPtr parentHwnd, string url, int id)
+        Task IOutOfProcessClientRpc.CreateBrowser(IntPtr parentHwnd, string url, int id, IDictionary<string, object> requestContextPreferences)
         {
             //Debugger.Break();
 
             return CefThread.ExecuteOnUiThread(() =>
             {
-                var browser = new OutOfProcessChromiumWebBrowser(_outOfProcessServer, id, url);
+                IRequestContext requestContext = null;
+                if (requestContextPreferences != null)
+                {
+                    requestContext = new RequestContext(Cef.GetGlobalRequestContext());
+                    foreach (KeyValuePair<string, object> pref in requestContextPreferences)
+                    {
+                        requestContext.SetPreference(pref.Key, pref.Value, out _);
+                    }
+                }
+
+                var browser = new OutOfProcessChromiumWebBrowser(_outOfProcessServer, id, url, requestContext);
 
                 var windowInfo = new WindowInfo();
                 windowInfo.WindowName = "CefSharpBrowserProcess";
@@ -123,6 +133,46 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
 
             browser?.GetBrowserHost().SetFocus(focus);
+        }
+
+        /// <summary>
+        /// Set Request Context Preferences of the browser.
+        /// </summary>
+        /// <param name="browserId">The browser id.</param>
+        /// <param name="preferences">The preferences.</param>
+        void IOutOfProcessClientRpc.SetRequestContextPreferences(int browserId, IDictionary<string, object> preferences)
+        {
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            if (browser?.GetRequestContext() is IRequestContext requestContext)
+            {
+                SetRequestContextPreferences(requestContext, preferences);
+            }
+        }
+
+        /// <summary>
+        /// Set Global Request Context Preferences for all browsers.
+        /// </summary>
+        /// <param name="preferences">The preferences.</param>
+        void IOutOfProcessClientRpc.SetGlobalRequestContextPreferences(IDictionary<string, object> preferences)
+        {
+            if (Cef.GetGlobalRequestContext() is IRequestContext requestContext)
+            {
+                SetRequestContextPreferences(requestContext, preferences);
+            }
+        }
+
+        void SetRequestContextPreferences(IRequestContext requestContext, IDictionary<string, object> preferences)
+        {
+            _ = CefThread.ExecuteOnUiThread(() =>
+            {
+                foreach (KeyValuePair<string, object> pref in preferences)
+                {
+                    requestContext.SetPreference(pref.Key, pref.Value, out _);
+                }
+
+                return true;
+            });
         }
     }
 }

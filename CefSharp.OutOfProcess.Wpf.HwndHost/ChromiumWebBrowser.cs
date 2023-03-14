@@ -17,6 +17,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Window = System.Windows.Window;
+using System.Collections.Generic;
 
 namespace CefSharp.OutOfProcess.Wpf.HwndHost
 {
@@ -130,6 +131,11 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// has been initialized.
         /// </summary>
         private bool _initialFocus;
+
+        /// <summary>
+        /// Contains the initial requests context preferences if any given in constructor.
+        /// </summary>
+        private readonly IDictionary<string, object> _requestContextPreferences;
 
         /// <summary>
         /// Activates browser upon creation, the default value is false. Prior to version 73
@@ -279,13 +285,15 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
         /// </summary>
         /// <param name="host">Out of process host</param>
         /// <param name="initialAddress">address to load initially</param>
-        public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress = null)
+        /// <param name="requestContextPreferences">requestContextPreferences to set</param>
+        public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress = null, IDictionary<string, object> requestContextPreferences = null)
         {
             if(host == null)
             {
                 throw new ArgumentNullException(nameof(host));
             }
 
+            _requestContextPreferences = requestContextPreferences;
             _host = host;
             _initialAddress = initialAddress;
 
@@ -418,6 +426,15 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
             return _devToolsContext.GoForwardAsync(options);
         }
 
+        /// <summary>
+        /// Set Request Context Preferences for this browser.
+        /// </summary>
+        /// <param name="preferences">The preferences.</param>
+        public void SetRequestContextPreferences(IDictionary<string, object> preferences)
+        {
+            _host.SetRequestContextPreferences(this._id, preferences);
+        }
+
         private void PresentationSourceChangedHandler(object sender, SourceChangedEventArgs args)
         {
             if (args.NewSource != null)
@@ -492,7 +509,7 @@ namespace CefSharp.OutOfProcess.Wpf.HwndHost
                             0);
             }
 
-            _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id);
+            _host.CreateBrowser(this, _hwndHost, url: _initialAddress, out _id, _requestContextPreferences);
 
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 

@@ -4,6 +4,7 @@ using PInvoke;
 using StreamJsonRpc;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -86,11 +87,12 @@ namespace CefSharp.OutOfProcess
         /// <param name="handle">handle used to host the control</param>
         /// <param name="url"></param>
         /// <param name="id"></param>
+        /// <param name="requestContextPreferences">request context preference.</param>
         /// <returns></returns>
-        public bool CreateBrowser(IChromiumWebBrowserInternal browser, IntPtr handle, string url, out int id)
+        public bool CreateBrowser(IChromiumWebBrowserInternal browser, IntPtr handle, string url, out int id, IDictionary<string, object> requestContextPreferences = null)
         {
             id = _browserIdentifier++;
-            _ = _outOfProcessClient.CreateBrowser(handle, url, id);
+            _ = _outOfProcessClient.CreateBrowser(handle, url, id, requestContextPreferences);
 
             return _browsers.TryAdd(id, browser);
         }
@@ -269,6 +271,25 @@ namespace CefSharp.OutOfProcess
             host.Init();            
 
             return host.InitializedTask;
-        }        
+        }
+
+        /// <summary>
+        /// Set Request Context Preferences of the browser.
+        /// </summary>
+        /// <param name="browserId">The browser id.</param>
+        /// <param name="preferences">The preferences.</param>
+        public void SetRequestContextPreferences(int browserId, IDictionary<string, object> preferences)
+        {
+            _outOfProcessClient.SetRequestContextPreferences(browserId, preferences);
+        }
+
+        /// <summary>
+        /// Set Global Request Context Preferences for all browsers.
+        /// </summary>
+        /// <param name="preferences">The preferences.</param>
+        public void SetGlobalRequestContextPreferences(IDictionary<string, object> preferences)
+        {
+            _outOfProcessClient.SetGlobalRequestContextPreferences(preferences);
+        }
     }
 }

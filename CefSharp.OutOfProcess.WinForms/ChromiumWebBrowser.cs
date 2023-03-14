@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using CefSharp.OutOfProcess.Internal;
 using CefSharp.Dom;
 using PInvoke;
+using System.Collections.Generic;
 
 namespace CefSharp.OutOfProcess.WinForms
 {
@@ -17,6 +18,11 @@ namespace CefSharp.OutOfProcess.WinForms
         private IDevToolsContext _devToolsContext;
         private OutOfProcessConnectionTransport _devToolsContextConnectionTransport;
         private bool _devToolsReady;
+
+        /// <summary>
+        /// Contains the initial requests context preferences if any given in constructor.
+        /// </summary>
+        private IDictionary<string, object> _requestContextPreferences;
 
         /// <inheritdoc/>
         public event EventHandler DOMContentLoaded;
@@ -64,13 +70,15 @@ namespace CefSharp.OutOfProcess.WinForms
         /// </summary>
         /// <param name="host">Out of process host</param>
         /// <param name="initialAddress">address that will be initially loaded in the browser</param>
-        public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress)
+        /// <param name="requestContextPreferences">requestContextPreferences to set</param>
+        public ChromiumWebBrowser(OutOfProcessHost host, string initialAddress, IDictionary<string, object> requestContextPreferences = null)
         {
             if(host == null)
             {
                 throw new ArgumentNullException(nameof(host));
             }
 
+            _requestContextPreferences = requestContextPreferences;
             _host = host;
             _initialAddress = initialAddress;
         }
@@ -128,7 +136,7 @@ namespace CefSharp.OutOfProcess.WinForms
 
             var size = Size;
 
-            _host.CreateBrowser(this, Handle, url: _initialAddress, out _id);
+            _host.CreateBrowser(this, Handle, url: _initialAddress, out _id, _requestContextPreferences);
 
             _devToolsContextConnectionTransport = new OutOfProcessConnectionTransport(_id, _host);
 
@@ -303,6 +311,15 @@ namespace CefSharp.OutOfProcess.WinForms
         public Task<Response> GoBackAsync(NavigationOptions options = null)
         {
             return _devToolsContext.GoBackAsync(options);
+        }
+
+        /// <summary>
+        /// Set Request Context Preferences for this browser.
+        /// </summary>
+        /// <param name="preferences">The preferences.</param>
+        public void SetRequestContextPreferences(IDictionary<string, object> preferences)
+        {
+            _host.SetRequestContextPreferences(this._id, preferences);
         }
 
         /// <inheritdoc/>
