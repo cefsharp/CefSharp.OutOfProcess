@@ -1,7 +1,8 @@
-﻿using System;
+﻿using CefSharp.OutOfProcess.Model;
+using System;
 using System.Threading.Tasks;
 
-namespace CefSharp.OutOfProcess.Interface
+namespace CefSharp.OutOfProcess
 {
     /// <summary>
     /// Send messages to the Remote Host (Browser process)
@@ -51,5 +52,17 @@ namespace CefSharp.OutOfProcess.Interface
         /// <param name="id">browser id</param>
         /// <param name="focus">set focus</param>
         void SetFocus(int browserId, bool focus);
+
+        /// <summary>
+        /// Set the value associated with preference name. If value is null the
+        /// preference will be restored to its default value. If setting the preference
+        /// fails then <see cref="SetPreferenceResponse.ErrorMessage"/> will be populated
+        /// with a detailed description of the problem.
+        /// Preferences set via the command-line usually cannot be modified.
+        /// </summary>
+        /// <param name="browserId">The browser id.</param>
+        /// <param name="name">The preference name</param>
+        /// <param name="value">The preference value</param>
+        Task<SetPreferenceResponse> SetRequestContextPreferenceAsync(int browserId, string name, object value);
     }
 }

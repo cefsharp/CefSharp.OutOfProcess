@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using CefSharp.OutOfProcess.Internal;
 using CefSharp.Dom;
 using PInvoke;
+using CefSharp.OutOfProcess.Model;
 
 namespace CefSharp.OutOfProcess.WinForms
 {
@@ -309,6 +310,17 @@ namespace CefSharp.OutOfProcess.WinForms
         public Task<Response> GoForwardAsync(NavigationOptions options = null)
         {
             return _devToolsContext.GoForwardAsync(options);
+        }
+
+        /// <inheritdoc />
+        public Task<SetPreferenceResponse> SetRequestContextPreferenceAsync(string name, object value)
+        {
+            if (_host == null)
+            {
+                throw new ObjectDisposedException(nameof(ChromiumWebBrowser));
+            }
+
+            return _host.SetRequestContextPreferenceAsync(_id, name, value);
         }
 
         /// <inheritdoc/>

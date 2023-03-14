@@ -5,10 +5,7 @@ using System.Threading;
 using System.ComponentModel;
 using CefSharp.Callback;
 using System.IO;
-using CefSharp.OutOfProcess.Interface;
 using System.Runtime.InteropServices;
-using PInvoke;
-using System.Diagnostics;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {

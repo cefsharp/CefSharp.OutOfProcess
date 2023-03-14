@@ -1,4 +1,5 @@
 ﻿using CefSharp.Dom;
+using CefSharp.OutOfProcess.Model;
 using System;
 using System.Threading.Tasks;
 
@@ -203,5 +204,16 @@ namespace CefSharp.OutOfProcess
         /// the navigation will resolve with the response of the last redirect. If can not go forward, resolves to null.</returns>
         /// <param name="options">Navigation parameters.</param>
         Task<Response> GoForwardAsync(NavigationOptions options = null);
+
+        /// <summary>
+        /// Set the value associated with preference name. If value is null the
+        /// preference will be restored to its default value. If setting the preference
+        /// fails then <see cref="SetPreferenceResponse.ErrorMessage"/> will be populated
+        /// with a detailed description of the problem.
+        /// Preferences set via the command-line usually cannot be modified.
+        /// </summary>
+        /// <param name="name">The preference name</param>
+        /// <param name="value">The preference value</param>
+        Task<SetPreferenceResponse> SetRequestContextPreferenceAsync(string name, object value);
     }
 }

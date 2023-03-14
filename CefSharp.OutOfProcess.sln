@@ -10,6 +10,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.WinForms", "CefSharp.OutOfProcess.WinForms\CefSharp.OutOfProcess.WinForms.csproj", "{8287C019-2720-47D5-8077-1A2DADB510E6}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Core", "CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj", "{6ED4E6BF-F43A-429C-87FD-E66203EEC348}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8CB2936D-E12C-4CD2-9044-F264D6F0547B} = {8CB2936D-E12C-4CD2-9044-F264D6F0547B}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.OutOfProcess.Interface", "CefSharp.OutOfProcess.Interface\CefSharp.OutOfProcess.Interface.csproj", "{D466B2AE-284B-430B-B707-F5D387724965}"
 EndProject

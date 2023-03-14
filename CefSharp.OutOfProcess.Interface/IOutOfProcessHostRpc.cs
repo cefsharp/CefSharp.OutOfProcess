@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CefSharp.OutOfProcess.Interface
+namespace CefSharp.OutOfProcess
 {
     /// <summary>
     /// Receive messages from the Remote Host (Browser process).

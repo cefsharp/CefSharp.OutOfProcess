@@ -4,9 +4,9 @@ using StreamJsonRpc;
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Diagnostics;
-using CefSharp.OutOfProcess.Interface;
 using System.Threading.Tasks;
+using CefSharp.OutOfProcess.Model;
+using System.Diagnostics;
 
 namespace CefSharp.OutOfProcess.BrowserProcess
 {
@@ -123,6 +123,47 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
 
             browser?.GetBrowserHost().SetFocus(focus);
+        }
+
+        /// <inheritdoc />
+        Task<SetPreferenceResponse> IOutOfProcessClientRpc.SetRequestContextPreferenceAsync(int browserId, string name, object value)
+        {
+            //Debugger.Break();
+
+            if (CefThread.HasShutdown)
+            {
+                return Task.FromResult(new SetPreferenceResponse(false, "Cef.Shutdown has already been called, it is no longer possible to call SetPreferenceAsync."));
+            }
+
+            var browser = _browsers.FirstOrDefault(x => x.Id == browserId);
+
+            if (browser == null)
+            {
+                return Task.FromResult(new SetPreferenceResponse(false, $"Browser with Id {browserId} was null."));
+            }
+
+            return CefThread.ExecuteOnUiThread(() =>
+            {
+                var ctx = browser?.GetRequestContext();
+
+                if (ctx == null)
+                {
+                    return new SetPreferenceResponse(false, "RequestContext was null.");
+                }
+
+                // StreamJsonRpc is converting ints to long which makes sense as we accept
+                // object. CefValue doesn't support Int64, so we just convert to int
+                // This should hopefully be fine as it's unliklely any preference requires
+                // an Int64 value.
+                if (value?.GetType() == typeof(long))
+                {
+                    value = Convert.ToInt32(value);
+                }
+
+                var success = ctx.SetPreference(name, value, out string error);
+
+                return new SetPreferenceResponse(success, error);
+            });
         }
     }
 }

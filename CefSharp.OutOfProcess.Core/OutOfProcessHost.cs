@@ -1,5 +1,5 @@
-﻿using CefSharp.OutOfProcess.Interface;
-using CefSharp.OutOfProcess.Internal;
+﻿using CefSharp.OutOfProcess.Internal;
+using CefSharp.OutOfProcess.Model;
 using PInvoke;
 using StreamJsonRpc;
 using System;
@@ -241,6 +241,21 @@ namespace CefSharp.OutOfProcess
         public void CloseBrowser(int id)
         {
             _ = _outOfProcessClient.CloseBrowser(id);
+        }
+
+        /// <summary>
+        /// Set the value associated with preference name. If value is null the
+        /// preference will be restored to its default value. If setting the preference
+        /// fails then <see cref="SetPreferenceResponse.ErrorMessage"/> will be populated
+        /// with a detailed description of the problem.
+        /// Preferences set via the command-line usually cannot be modified.
+        /// </summary>
+        /// <param name="id">The browser id.</param>
+        /// <param name="name">The preference name</param>
+        /// <param name="value">The preference value</param>
+        public Task<SetPreferenceResponse> SetRequestContextPreferenceAsync(int id, string name, object value)
+        {
+            return _outOfProcessClient.SetRequestContextPreferenceAsync(id, name, value);
         }
 
         public void Dispose()

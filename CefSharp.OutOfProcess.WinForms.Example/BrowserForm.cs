@@ -382,7 +382,7 @@ namespace CefSharp.OutOfProcess.WinForms.Example
         {
             var control = GetCurrentTabControl();
 
-            if(control == null)
+            if (control == null)
             {
                 return;
             }
@@ -401,6 +401,20 @@ namespace CefSharp.OutOfProcess.WinForms.Example
                     // UseShellExecute is false by default on .NET Core.
                     UseShellExecute = true
                 });
+            }
+        }
+
+        private async void SetMinFontSizeToolStripMenuItemClick(object sender, EventArgs e)
+        {
+            var control = GetCurrentTabControl();
+            if (control != null)
+            {
+                var response = await control.Browser.SetRequestContextPreferenceAsync("webkit.webprefs.minimum_font_size", 24);
+
+                if(!response.Success)
+                {
+                    MessageBox.Show("Failed to Change Min Font Size - " + response.ErrorMessage);
+                }
             }
         }
     }
