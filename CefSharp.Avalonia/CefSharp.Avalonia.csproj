@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <RootNamespace>CefSharp.Avalonia</RootNamespace>
+    <AssemblyName>CefSharp.Avalonia</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageId>CefSharp.Avalonia</PackageId>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="AvaloniaRenderSurface.cs" />
+    <Compile Remove="CursorsProvider.cs" />
+    <Compile Remove="InputExtensions.cs" />
+    <Compile Remove="KeyInterop.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="11.0.0-preview5" />
+    <PackageReference Include="StreamJsonRpc" Version="2.14.24" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CefSharp.OutOfProcess.Core\CefSharp.OutOfProcess.Core.csproj" />
+    <ProjectReference Include="..\CefSharp.Dom\lib\PuppeteerSharp\CefSharp.Dom.OutOfProcess.csproj" />
+  </ItemGroup>
+</Project>

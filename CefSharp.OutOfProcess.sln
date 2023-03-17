@@ -27,6 +27,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.Avalonia", "CefSharp.Avalonia\CefSharp.Avalonia.csproj", "{5591951C-DAC1-4014-BD17-B692B91A6CC5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CefSharp.Avalonia.Example", "CefSharp.Avalonia.Example\CefSharp.Avalonia.Example.csproj", "{3F8073FB-B167-4C2B-A1D8-5040BD1F6E84}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,6 +69,14 @@ Global
 		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7D39CC02-FB02-4F03-B329-E5DB567EC354}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5591951C-DAC1-4014-BD17-B692B91A6CC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5591951C-DAC1-4014-BD17-B692B91A6CC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5591951C-DAC1-4014-BD17-B692B91A6CC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5591951C-DAC1-4014-BD17-B692B91A6CC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F8073FB-B167-4C2B-A1D8-5040BD1F6E84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F8073FB-B167-4C2B-A1D8-5040BD1F6E84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F8073FB-B167-4C2B-A1D8-5040BD1F6E84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F8073FB-B167-4C2B-A1D8-5040BD1F6E84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
