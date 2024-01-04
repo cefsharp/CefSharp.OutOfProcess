@@ -12,8 +12,6 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         [STAThread]
         public static int Main(string[] args)
         {
-            Cef.EnableHighDPISupport();
-
             //Debugger.Launch();
 
             var parentProcessId = int.Parse(CommandLineArgsParser.GetArgumentValue(args, "--parentProcessId"));
