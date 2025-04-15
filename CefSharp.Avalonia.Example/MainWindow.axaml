@@ -40,7 +40,7 @@
       </MenuItem>
     </Menu>
     
-    <TabControl Name="tabControl" Grid.Row="1" Items="{Binding Tabs}" AutoScrollToSelectedItem="True">
+    <TabControl Name="tabControl" Grid.Row="1" ItemsSource="{Binding Tabs}" AutoScrollToSelectedItem="True">
       <TabControl.ItemTemplate>
         <DataTemplate>
           <TextBlock Text="{Binding Header}" />

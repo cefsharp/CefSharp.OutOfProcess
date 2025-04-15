@@ -9,7 +9,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CefSharp.OutOfProcess.Wpf.HwndHost\CefSharp.OutOfProcess.Wpf.HwndHost.csproj" />

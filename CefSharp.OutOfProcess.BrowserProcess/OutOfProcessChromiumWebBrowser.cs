@@ -53,7 +53,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         /// <summary>
         /// Used as workaround for issue https://github.com/cefsharp/CefSharp/issues/3021
         /// </summary>
-        private long _canExecuteJavascriptInMainFrameId;
+        private int _canExecuteJavascriptInMainFrameChildProcessId;
 
         /// <summary>
         /// The browser initialized - boolean represented as 0 (false) and 1(true) as we use Interlocker to increment/reset
@@ -246,7 +246,7 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             get { return InternalIsBrowserInitialized(); }
         }
 
-        void IWebBrowserInternal.SetCanExecuteJavascriptOnMainFrame(long frameId, bool canExecute)
+        void IWebBrowserInternal.SetCanExecuteJavascriptOnMainFrame(string frameId, bool canExecute)
         {
             //When loading pages of a different origin the frameId changes
             //For the first loading of a new origin the messages from the render process
@@ -255,12 +255,14 @@ namespace CefSharp.OutOfProcess.BrowserProcess
             //incorrectly overrides the value
             //https://github.com/cefsharp/CefSharp/issues/3021
 
-            if (frameId > _canExecuteJavascriptInMainFrameId && !canExecute)
+            var chromiumChildProcessId = GetChromiumChildProcessId(frameId);
+
+            if (chromiumChildProcessId > _canExecuteJavascriptInMainFrameChildProcessId && !canExecute)
             {
                 return;
             }
 
-            _canExecuteJavascriptInMainFrameId = frameId;
+            _canExecuteJavascriptInMainFrameChildProcessId = chromiumChildProcessId;
             CanExecuteJavascriptInMainFrame = canExecute;
         }
 
@@ -873,6 +875,23 @@ namespace CefSharp.OutOfProcess.BrowserProcess
         void IWebBrowserInternal.SetTooltipText(string tooltipText)
         {
             TooltipText = tooltipText;
+        }
+
+        private int GetChromiumChildProcessId(string frameIdentifier)
+        {
+            try
+            {
+                var parts = frameIdentifier.Split('-');
+
+                if (int.TryParse(parts[0], out var childProcessId))
+                    return childProcessId;
+            }
+            catch
+            {
+
+            }
+
+            return -1;
         }
     }
 }
