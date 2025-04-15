@@ -86,6 +86,8 @@ namespace CefSharp.OutOfProcess.WinForms
         void IChromiumWebBrowserInternal.OnAfterBrowserCreated(IntPtr hwnd)
         {
             _browserHwnd = hwnd;
+
+            ShowInternal(Width, Height);
         }
 
         /// <inheritdoc/>
