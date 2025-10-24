@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.7" />
-    <PackageReference Include="StreamJsonRpc" Version="2.21.69" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.8" />
+    <PackageReference Include="StreamJsonRpc" Version="2.22.23" />
   </ItemGroup>
 
   <ItemGroup>
