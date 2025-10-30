@@ -14,7 +14,7 @@
     <PackageReference Include="PInvoke.Kernel32" Version="0.7.124" />
     <PackageReference Include="PInvoke.User32" Version="0.7.124" />
     <PackageReference Include="StreamJsonRpc" Version="2.22.23" />
-    <PackageReference Include="CefSharp.Common" Version="140.1.140" />
+    <PackageReference Include="CefSharp.Common" Version="141.0.110" />
   </ItemGroup>
 
   <ItemGroup>
