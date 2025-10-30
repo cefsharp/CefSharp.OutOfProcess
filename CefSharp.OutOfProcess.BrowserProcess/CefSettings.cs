@@ -5,5 +5,23 @@
     /// </summary>
     public class CefSettings : CefSettingsBase
     {
+        /// <summary>
+        /// Intialize with default values
+        /// </summary>
+        public CefSettings() : base()
+        {
+            // CEF doesn't call GetAuthCredentials unless
+            // the Chrome login prompt is disabled
+            // https://github.com/chromiumembedded/cef/issues/3603 
+            CefCommandLineArgs.Add("disable-chrome-login-prompt");
+
+            // Disable "Restore pages" popup after incorrect shutdown
+            // https://github.com/chromiumembedded/cef/issues/3767
+            CefCommandLineArgs.Add("hide-crash-restore-bubble");
+
+            // Disable the back-forward cache
+            // https://github.com/cefsharp/CefSharp/issues/4621
+            CefCommandLineArgs.Add("disable-back-forward-cache");
+        }
     }
 }
